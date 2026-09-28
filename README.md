@@ -63,23 +63,6 @@ $$\text{Cost} = (\text{CollisionRisk} \times \lambda_{\text{penalty}}) + w_d \cd
 
 ---
 
-## 🎓 Foundations of AI — Course Alignment
-
-- **Unit I & II — Search & Heuristics:**
-  - $A^*$ Informed Pathfinding with admissible straight-line Euclidean distance heuristic $h(n)$.
-  - Best-First Exploration for candidate bypass routes around spatial hazard zones.
-  - Game/Decision concepts for conflict resolution right-of-way.
-- **Unit III — Knowledge Representation & Reasoning:**
-  - Aviation safety rules and separation production rules.
-  - Forward Chaining to derive urgent collision status from sensor lookahead coordinates.
-  - Fuzzy/Uncertainty weights modeling fuel urgency and collision risk penalties.
-- **Unit IV — Classical & Multi-Agent Planning:**
-  - Airspace graph map representation with node adjacency costs.
-  - Dynamic Replanning with closed-loop execution monitoring.
-  - Multi-Agent Coordination via priority queue negotiation.
-
----
-
 ## 🔄 The 5 Core Conflict Resolution Cases
 
 - **Case A (Pairwise Conflict):** Lower-priority aircraft reroutes around the predicted conflict zone via penalized $A^*$ search (or changes flight level); higher-priority aircraft maintains course.
