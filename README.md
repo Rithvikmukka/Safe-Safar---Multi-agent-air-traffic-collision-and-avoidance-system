@@ -69,7 +69,7 @@ $$\text{Observe} \longrightarrow \text{Detect} \longrightarrow \text{Reason} \lo
    ```bash
    git clone https://github.com/Rithvikmukka/Safe-Safar---Multi-agent-air-traffic-collision-and-avoidance-system.git
    ```
-2. Open [`safe safar.html`](./safe%20safar.html) or [`index.html`](./index.html) directly in any modern web browser (Chrome, Firefox, Edge, Safari).
+2. Open [`safe safar.html`](./safe%20safar.html) directly in any modern web browser (Chrome, Firefox, Edge, Safari).
 3. No build tools, Node.js, or server setup required!
 
 ---
