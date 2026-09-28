@@ -1,1206 +1,1845 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Skylane — Multi-Agent Air Traffic Collision Avoidance</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --bg:#0A0E16;
-    --bg-panel:#10161F;
-    --bg-elevated:#161D29;
-    --bg-elevated-2:#1B2430;
-    --border:#232C3A;
-    --border-soft:#1A2230;
-    --text:#E7ECF3;
-    --text-dim:#8B96A8;
-    --text-faint:#5C6779;
-    --amber:#F5A623;
-    --cyan:#4FD1E8;
-    --rose:#FB6B6B;
-    --violet:#B18CFF;
-    --green:#4ADE80;
-    --font-display:'Space Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif;
-    --font-mono:'IBM Plex Mono', 'SF Mono', Consolas, monospace;
-  }
-  @media (prefers-color-scheme: light){
-    :root:not([data-theme="dark"]){
-      --bg:#F3F5F9;
-      --bg-panel:#FFFFFF;
-      --bg-elevated:#EEF1F6;
-      --bg-elevated-2:#E5E9F0;
-      --border:#D6DDE7;
-      --border-soft:#E1E6EE;
-      --text:#141B26;
-      --text-dim:#5B6577;
-      --text-faint:#8B95A6;
-      --amber:#B9700D;
-      --cyan:#0E7F94;
-      --rose:#C43F52;
-      --violet:#7256C9;
-      --green:#188753;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Skylane — Multi-Agent Air Traffic Collision Avoidance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0A0E16;
+      --bg-panel: #10161F;
+      --bg-elevated: #161D29;
+      --bg-elevated-2: #1B2430;
+      --border: #232C3A;
+      --border-soft: #1A2230;
+      --text: #E7ECF3;
+      --text-dim: #8B96A8;
+      --text-faint: #5C6779;
+      --amber: #F5A623;
+      --cyan: #4FD1E8;
+      --rose: #FB6B6B;
+      --violet: #B18CFF;
+      --green: #4ADE80;
+      --font-display: 'Space Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif;
+      --font-mono: 'IBM Plex Mono', 'SF Mono', Consolas, monospace;
     }
-  }
-  :root[data-theme="light"]{
-    --bg:#F3F5F9;
-    --bg-panel:#FFFFFF;
-    --bg-elevated:#EEF1F6;
-    --bg-elevated-2:#E5E9F0;
-    --border:#D6DDE7;
-    --border-soft:#E1E6EE;
-    --text:#141B26;
-    --text-dim:#5B6577;
-    --text-faint:#8B95A6;
-    --amber:#B9700D;
-    --cyan:#0E7F94;
-    --rose:#C43F52;
-    --violet:#7256C9;
-    --green:#188753;
-  }
-  *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;}
-  body{
-    background:var(--bg);
-    color:var(--text);
-    font-family:var(--font-display);
-    line-height:1.6;
-    -webkit-font-smoothing:antialiased;
-  }
-  ::selection{background:var(--amber);color:#0A0E16;}
-  a{color:var(--cyan);}
 
-  /* ============ TOP NAV ============ */
-  .topbar{
-    position:sticky;top:0;z-index:50;
-    display:flex;align-items:center;justify-content:space-between;
-    padding:14px 28px;
-    background:color-mix(in srgb, var(--bg) 88%, transparent);
-    backdrop-filter:blur(10px);
-    border-bottom:1px solid var(--border-soft);
-  }
-  .brand{display:flex;align-items:center;gap:10px;font-weight:600;letter-spacing:.02em;}
-  .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--amber);box-shadow:0 0 10px var(--amber);}
-  .topnav{display:flex;gap:22px;font-size:14px;color:var(--text-dim);}
-  .topnav a{color:var(--text-dim);text-decoration:none;transition:color .15s;}
-  .topnav a:hover{color:var(--text);}
+    @media (prefers-color-scheme: light) {
+      :root:not([data-theme="dark"]) {
+        --bg: #F3F5F9;
+        --bg-panel: #FFFFFF;
+        --bg-elevated: #EEF1F6;
+        --bg-elevated-2: #E5E9F0;
+        --border: #D6DDE7;
+        --border-soft: #E1E6EE;
+        --text: #141B26;
+        --text-dim: #5B6577;
+        --text-faint: #8B95A6;
+        --amber: #B9700D;
+        --cyan: #0E7F94;
+        --rose: #C43F52;
+        --violet: #7256C9;
+        --green: #188753;
+      }
+    }
 
-  /* ============ HERO / EXPLANATION ============ */
-  .wrap{max-width:900px;margin:0 auto;padding:0 28px;}
-  .hero{padding:88px 0 56px;}
-  .hero .kicker{color:var(--amber);font-family:var(--font-mono);font-size:13px;margin-bottom:18px;}
-  .hero h1{
-    font-size:clamp(34px,5vw,56px);
-    line-height:1.08;
-    margin:0 0 22px;
-    font-weight:700;
-    letter-spacing:-.01em;
-    max-width:15ch;
-  }
-  .hero p.lead{
-    font-size:18px;
-    color:var(--text-dim);
-    max-width:62ch;
-    margin:0 0 30px;
-  }
-  .hero-actions{display:flex;gap:12px;flex-wrap:wrap;}
-  .btn{
-    font-family:var(--font-display);
-    font-size:14px;font-weight:600;
-    padding:12px 20px;border-radius:8px;
-    border:1px solid var(--border);
-    background:var(--bg-elevated);
-    color:var(--text);
-    cursor:pointer;
-    transition:.15s border-color, .15s transform;
-    text-decoration:none;
-    display:inline-flex;align-items:center;gap:8px;
-  }
-  .btn:hover{border-color:var(--amber);}
-  .btn:active{transform:scale(.98);}
-  .btn.primary{background:var(--amber);color:#1A1200;border-color:var(--amber);}
-  .btn.primary:hover{filter:brightness(1.08);}
+    :root[data-theme="light"] {
+      --bg: #F3F5F9;
+      --bg-panel: #FFFFFF;
+      --bg-elevated: #EEF1F6;
+      --bg-elevated-2: #E5E9F0;
+      --border: #D6DDE7;
+      --border-soft: #E1E6EE;
+      --text: #141B26;
+      --text-dim: #5B6577;
+      --text-faint: #8B95A6;
+      --amber: #B9700D;
+      --cyan: #0E7F94;
+      --rose: #C43F52;
+      --violet: #7256C9;
+      --green: #188753;
+    }
 
-  section.article{padding:8px 0 64px;}
-  section.article h2{
-    font-size:26px;font-weight:600;margin:56px 0 16px;
-    letter-spacing:-.005em;
-  }
-  section.article h2 .num{color:var(--text-faint);font-family:var(--font-mono);font-weight:400;font-size:16px;margin-right:10px;}
-  section.article p{color:var(--text-dim);font-size:15.5px;max-width:68ch;margin:0 0 14px;}
-  section.article p strong{color:var(--text);font-weight:600;}
-  code.inline{
-    font-family:var(--font-mono);font-size:.88em;
-    background:var(--bg-elevated);border:1px solid var(--border-soft);
-    padding:1px 6px;border-radius:4px;color:var(--cyan);
-  }
+    * {
+      box-sizing: border-box;
+    }
 
-  .formula{
-    font-family:var(--font-mono);
-    background:var(--bg-panel);
-    border:1px solid var(--border);
-    border-left:3px solid var(--cyan);
-    padding:16px 20px;border-radius:6px;
-    margin:18px 0;font-size:15px;color:var(--text);
-    overflow-x:auto;
-  }
-  .formula .k{color:var(--cyan);}
-  .formula small{display:block;color:var(--text-faint);margin-top:8px;font-size:12.5px;}
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+    }
 
-  table.peas{width:100%;border-collapse:collapse;margin:18px 0 8px;font-size:14.5px;}
-  table.peas th, table.peas td{
-    text-align:left;padding:11px 14px;border-bottom:1px solid var(--border-soft);
-    vertical-align:top;
-  }
-  table.peas th{
-    color:var(--text-faint);font-weight:600;font-size:12px;
-    font-family:var(--font-mono);letter-spacing:.02em;
-    width:190px;
-  }
-  table.peas td{color:var(--text-dim);}
-  table.peas tr:last-child td, table.peas tr:last-child th{border-bottom:none;}
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-display);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
 
-  .prop-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:20px 0;}
-  @media (max-width:640px){.prop-grid{grid-template-columns:1fr;}}
-  .prop-card{
-    background:var(--bg-panel);border:1px solid var(--border-soft);
-    border-radius:8px;padding:14px 16px;
-  }
-  .prop-card .name{font-weight:600;font-size:14px;margin-bottom:4px;color:var(--text);}
-  .prop-card .desc{font-size:13px;color:var(--text-faint);line-height:1.5;}
+    ::selection {
+      background: var(--amber);
+      color: #0A0E16;
+    }
 
-  .loop{
-    display:flex;flex-wrap:wrap;gap:0;align-items:center;
-    margin:22px 0;font-family:var(--font-mono);font-size:13px;
-  }
-  .loop .step{
-    background:var(--bg-elevated);border:1px solid var(--border);
-    padding:9px 14px;border-radius:6px;color:var(--text);
-  }
-  .loop .arrow{color:var(--text-faint);padding:0 8px;}
+    a {
+      color: var(--cyan);
+    }
 
-  .case-list{display:grid;gap:10px;margin:18px 0;}
-  .case{
-    background:var(--bg-panel);border:1px solid var(--border-soft);
-    border-radius:8px;padding:14px 16px;display:flex;gap:14px;
-  }
-  .case .letter{
-    font-family:var(--font-mono);color:var(--amber);font-weight:600;
-    font-size:14px;flex-shrink:0;width:20px;
-  }
-  .case .body b{display:block;color:var(--text);font-size:14px;margin-bottom:3px;}
-  .case .body span{color:var(--text-faint);font-size:13px;line-height:1.5;}
+    /* ============ TOP NAV ============ */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 28px;
+      background: color-mix(in srgb, var(--bg) 88%, transparent);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border-soft);
+    }
 
-  .scroll-cta{
-    display:flex;align-items:center;gap:10px;color:var(--text-faint);
-    font-family:var(--font-mono);font-size:12.5px;margin-top:10px;
-  }
-  .scroll-cta svg{animation:bob 1.6s ease-in-out infinite;}
-  @keyframes bob{0%,100%{transform:translateY(0);}50%{transform:translateY(5px);}}
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+      letter-spacing: .02em;
+    }
 
-  /* ============ SIMULATION ============ */
-  .sim-section{
-    border-top:1px solid var(--border-soft);
-    background:var(--bg-panel);
-    padding:40px 0 60px;
-  }
-  .sim-wrap{max-width:1320px;margin:0 auto;padding:0 24px;}
-  .sim-header{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:16px;margin-bottom:20px;}
-  .sim-header h2{font-size:24px;margin:0 0 6px;font-weight:600;}
-  .sim-header p{color:var(--text-faint);font-size:13.5px;margin:0;max-width:60ch;}
+    .brand .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--amber);
+      box-shadow: 0 0 10px var(--amber);
+    }
 
-  .toolbar{
-    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
-    background:var(--bg-elevated);border:1px solid var(--border);
-    border-radius:10px;padding:10px 14px;margin-bottom:16px;
-  }
-  .toolbar .group{display:flex;align-items:center;gap:6px;}
-  .toolbar .sep{width:1px;height:22px;background:var(--border);margin:0 6px;}
-  .icon-btn{
-    font-family:var(--font-mono);font-size:12.5px;
-    background:var(--bg-panel);border:1px solid var(--border);
-    color:var(--text-dim);padding:7px 12px;border-radius:6px;cursor:pointer;
-    transition:.15s;white-space:nowrap;
-  }
-  .icon-btn:hover{color:var(--text);border-color:var(--text-faint);}
-  .icon-btn.active{background:var(--amber);color:#1A1200;border-color:var(--amber);}
-  .icon-btn.on{background:var(--green);color:#062011;border-color:var(--green);}
-  #addFlightBtn{
-    background:var(--amber);color:#1A1200;border-color:var(--amber);font-weight:600;
-  }
-  #addFlightBtn:hover{filter:brightness(1.08);}
-  .stat-pill{
-    font-family:var(--font-mono);font-size:12px;color:var(--text-faint);
-    padding:6px 10px;background:var(--bg-panel);border:1px solid var(--border-soft);
-    border-radius:20px;
-  }
-  .stat-pill b{color:var(--text);}
+    .topnav {
+      display: flex;
+      gap: 22px;
+      font-size: 14px;
+      color: var(--text-dim);
+    }
 
-  .sim-grid{display:grid;grid-template-columns:1fr 300px;gap:16px;}
-  @media (max-width:980px){.sim-grid{grid-template-columns:1fr;}}
-  .sim-grid.panel-hidden{grid-template-columns:1fr;}
+    .topnav a {
+      color: var(--text-dim);
+      text-decoration: none;
+      transition: color .15s;
+    }
 
-  .radar-box{
-    position:relative;
-    background:var(--bg);
-    border:1px solid var(--border);
-    border-radius:12px;
-    overflow:hidden;
-  }
-  #radar{display:block;width:100%;height:auto;aspect-ratio:1000/600;cursor:crosshair;}
-  .radar-sweep{
-    position:absolute;inset:0;pointer-events:none;
-    background:conic-gradient(from 0deg, color-mix(in srgb, var(--cyan) 10%, transparent), transparent 20%);
-    animation:sweep 6s linear infinite;
-    opacity:.5;mix-blend-mode:screen;
-  }
-  @keyframes sweep{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+    .topnav a:hover {
+      color: var(--text);
+    }
 
-  .side-col{display:flex;flex-direction:column;gap:14px;min-width:0;}
-  .panel{
-    background:var(--bg-elevated);border:1px solid var(--border);
-    border-radius:10px;overflow:hidden;display:flex;flex-direction:column;
-  }
-  .panel-title{
-    padding:10px 14px;border-bottom:1px solid var(--border-soft);
-    font-family:var(--font-mono);font-size:11.5px;letter-spacing:.04em;
-    color:var(--text-faint);display:flex;justify-content:space-between;align-items:center;
-  }
-  .fleet-list{max-height:260px;overflow-y:auto;padding:8px;}
-  .fleet-empty{color:var(--text-faint);font-size:13px;padding:18px 12px;text-align:center;}
-  .flight-card{
-    background:var(--bg-panel);border:1px solid var(--border-soft);
-    border-radius:8px;padding:10px 12px;margin-bottom:6px;cursor:pointer;
-    transition:.15s border-color;
-  }
-  .flight-card:hover{border-color:var(--text-faint);}
-  .flight-card .row1{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
-  .flight-card .fid{font-family:var(--font-mono);font-weight:600;font-size:13px;}
-  .badge{
-    font-family:var(--font-mono);font-size:10px;padding:2px 7px;border-radius:20px;
-    text-transform:uppercase;letter-spacing:.03em;
-  }
-  .badge.cruising{background:color-mix(in srgb, var(--cyan) 18%, transparent);color:var(--cyan);}
-  .badge.conflict_detected{background:color-mix(in srgb, var(--rose) 20%, transparent);color:var(--rose);}
-  .badge.rerouting{background:color-mix(in srgb, var(--amber) 20%, transparent);color:var(--amber);}
-  .badge.holding{background:color-mix(in srgb, var(--violet) 20%, transparent);color:var(--violet);}
-  .badge.landed{background:color-mix(in srgb, var(--green) 20%, transparent);color:var(--green);}
-  .flight-card .meta{display:flex;gap:10px;font-family:var(--font-mono);font-size:11px;color:var(--text-faint);}
-  .flight-card .fuelbar{height:3px;background:var(--border);border-radius:2px;margin-top:8px;overflow:hidden;}
-  .flight-card .fuelbar i{display:block;height:100%;background:var(--green);}
+    /* ============ HERO / EXPLANATION ============ */
+    .wrap {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 28px;
+    }
 
-  .log-list{max-height:220px;overflow-y:auto;padding:10px 12px;font-family:var(--font-mono);font-size:11.5px;}
-  .log-line{margin-bottom:7px;line-height:1.45;color:var(--text-dim);}
-  .log-line .t{color:var(--text-faint);margin-right:6px;}
-  .log-line.conflict{color:var(--rose);}
-  .log-line.reroute{color:var(--amber);}
-  .log-line.holding{color:var(--violet);}
-  .log-line.landed{color:var(--green);}
-  .log-empty{color:var(--text-faint);}
+    .hero {
+      padding: 88px 0 56px;
+    }
 
-  .legend{display:flex;flex-wrap:wrap;gap:12px;padding:10px 14px;font-family:var(--font-mono);font-size:11px;color:var(--text-faint);}
-  .legend span{display:inline-flex;align-items:center;gap:6px;}
-  .legend i{width:8px;height:8px;border-radius:50%;display:inline-block;}
+    .hero .kicker {
+      color: var(--amber);
+      font-family: var(--font-mono);
+      font-size: 13px;
+      margin-bottom: 18px;
+    }
 
-  /* Config drawer */
-  .drawer-backdrop{
-    position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;
-    opacity:0;pointer-events:none;transition:opacity .2s;
-  }
-  .drawer-backdrop.open{opacity:1;pointer-events:auto;}
-  .drawer{
-    position:fixed;top:0;right:-380px;width:360px;height:100%;
-    background:var(--bg-elevated);border-left:1px solid var(--border);
-    z-index:101;transition:right .25s ease;
-    display:flex;flex-direction:column;
-  }
-  .drawer.open{right:0;}
-  .drawer-head{padding:18px 20px;border-bottom:1px solid var(--border-soft);display:flex;justify-content:space-between;align-items:center;}
-  .drawer-head h3{margin:0;font-size:16px;font-family:var(--font-mono);}
-  .drawer-close{background:none;border:none;color:var(--text-faint);font-size:20px;cursor:pointer;line-height:1;}
-  .drawer-body{padding:18px 20px;overflow-y:auto;flex:1;}
-  .field{margin-bottom:20px;}
-  .field label{
-    display:flex;justify-content:space-between;font-size:12.5px;color:var(--text-dim);
-    font-family:var(--font-mono);margin-bottom:8px;
-  }
-  .field label b{color:var(--text);}
-  .field input[type=range]{width:100%;accent-color:var(--amber);}
-  .field .readout{
-    background:var(--bg-panel);border:1px solid var(--border-soft);border-radius:6px;
-    padding:10px 12px;font-family:var(--font-mono);font-size:13px;color:var(--text-dim);
-    display:flex;justify-content:space-between;
-  }
-  .field .readout b{color:var(--text);}
-  .drawer-foot{padding:16px 20px;border-top:1px solid var(--border-soft);display:flex;gap:10px;}
-  .drawer-foot .btn{flex:1;justify-content:center;}
+    .hero h1 {
+      font-size: clamp(34px, 5vw, 56px);
+      line-height: 1.08;
+      margin: 0 0 22px;
+      font-weight: 700;
+      letter-spacing: -.01em;
+      max-width: 15ch;
+    }
 
-  footer{
-    text-align:center;padding:36px 20px 50px;color:var(--text-faint);
-    font-size:12.5px;font-family:var(--font-mono);
-  }
+    .hero p.lead {
+      font-size: 18px;
+      color: var(--text-dim);
+      max-width: 62ch;
+      margin: 0 0 30px;
+    }
 
-  @media (prefers-reduced-motion: reduce){
-    .radar-sweep, .scroll-cta svg{animation:none;}
-  }
-</style>
+    .hero-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 600;
+      padding: 12px 20px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg-elevated);
+      color: var(--text);
+      cursor: pointer;
+      transition: .15s border-color, .15s transform;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn:hover {
+      border-color: var(--amber);
+    }
+
+    .btn:active {
+      transform: scale(.98);
+    }
+
+    .btn.primary {
+      background: var(--amber);
+      color: #1A1200;
+      border-color: var(--amber);
+    }
+
+    .btn.primary:hover {
+      filter: brightness(1.08);
+    }
+
+    section.article {
+      padding: 8px 0 64px;
+    }
+
+    section.article h2 {
+      font-size: 26px;
+      font-weight: 600;
+      margin: 56px 0 16px;
+      letter-spacing: -.005em;
+    }
+
+    section.article h2 .num {
+      color: var(--text-faint);
+      font-family: var(--font-mono);
+      font-weight: 400;
+      font-size: 16px;
+      margin-right: 10px;
+    }
+
+    section.article p {
+      color: var(--text-dim);
+      font-size: 15.5px;
+      max-width: 68ch;
+      margin: 0 0 14px;
+    }
+
+    section.article p strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    code.inline {
+      font-family: var(--font-mono);
+      font-size: .88em;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-soft);
+      padding: 1px 6px;
+      border-radius: 4px;
+      color: var(--cyan);
+    }
+
+    .formula {
+      font-family: var(--font-mono);
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--cyan);
+      padding: 16px 20px;
+      border-radius: 6px;
+      margin: 18px 0;
+      font-size: 15px;
+      color: var(--text);
+      overflow-x: auto;
+    }
+
+    .formula .k {
+      color: var(--cyan);
+    }
+
+    .formula small {
+      display: block;
+      color: var(--text-faint);
+      margin-top: 8px;
+      font-size: 12.5px;
+    }
+
+    table.peas {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 18px 0 8px;
+      font-size: 14.5px;
+    }
+
+    table.peas th,
+    table.peas td {
+      text-align: left;
+      padding: 11px 14px;
+      border-bottom: 1px solid var(--border-soft);
+      vertical-align: top;
+    }
+
+    table.peas th {
+      color: var(--text-faint);
+      font-weight: 600;
+      font-size: 12px;
+      font-family: var(--font-mono);
+      letter-spacing: .02em;
+      width: 190px;
+    }
+
+    table.peas td {
+      color: var(--text-dim);
+    }
+
+    table.peas tr:last-child td,
+    table.peas tr:last-child th {
+      border-bottom: none;
+    }
+
+    .prop-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin: 20px 0;
+    }
+
+    @media (max-width:640px) {
+      .prop-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .prop-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-soft);
+      border-radius: 8px;
+      padding: 14px 16px;
+    }
+
+    .prop-card .name {
+      font-weight: 600;
+      font-size: 14px;
+      margin-bottom: 4px;
+      color: var(--text);
+    }
+
+    .prop-card .desc {
+      font-size: 13px;
+      color: var(--text-faint);
+      line-height: 1.5;
+    }
+
+    .loop {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0;
+      align-items: center;
+      margin: 22px 0;
+      font-family: var(--font-mono);
+      font-size: 13px;
+    }
+
+    .loop .step {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      padding: 9px 14px;
+      border-radius: 6px;
+      color: var(--text);
+    }
+
+    .loop .arrow {
+      color: var(--text-faint);
+      padding: 0 8px;
+    }
+
+    .case-list {
+      display: grid;
+      gap: 10px;
+      margin: 18px 0;
+    }
+
+    .case {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-soft);
+      border-radius: 8px;
+      padding: 14px 16px;
+      display: flex;
+      gap: 14px;
+    }
+
+    .case .letter {
+      font-family: var(--font-mono);
+      color: var(--amber);
+      font-weight: 600;
+      font-size: 14px;
+      flex-shrink: 0;
+      width: 20px;
+    }
+
+    .case .body b {
+      display: block;
+      color: var(--text);
+      font-size: 14px;
+      margin-bottom: 3px;
+    }
+
+    .case .body span {
+      color: var(--text-faint);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .scroll-cta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--text-faint);
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      margin-top: 10px;
+    }
+
+    .scroll-cta svg {
+      animation: bob 1.6s ease-in-out infinite;
+    }
+
+    @keyframes bob {
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(5px);
+      }
+    }
+
+    /* ============ SIMULATION ============ */
+    .sim-section {
+      border-top: 1px solid var(--border-soft);
+      background: var(--bg-panel);
+      padding: 40px 0 60px;
+    }
+
+    .sim-wrap {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    .sim-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .sim-header h2 {
+      font-size: 24px;
+      margin: 0 0 6px;
+      font-weight: 600;
+    }
+
+    .sim-header p {
+      color: var(--text-faint);
+      font-size: 13.5px;
+      margin: 0;
+      max-width: 60ch;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-bottom: 16px;
+    }
+
+    .toolbar .group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .toolbar .sep {
+      width: 1px;
+      height: 22px;
+      background: var(--border);
+      margin: 0 6px;
+    }
+
+    .icon-btn {
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      padding: 7px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: .15s;
+      white-space: nowrap;
+    }
+
+    .icon-btn:hover {
+      color: var(--text);
+      border-color: var(--text-faint);
+    }
+
+    .icon-btn.active {
+      background: var(--amber);
+      color: #1A1200;
+      border-color: var(--amber);
+    }
+
+    .icon-btn.on {
+      background: var(--green);
+      color: #062011;
+      border-color: var(--green);
+    }
+
+    #addFlightBtn {
+      background: var(--amber);
+      color: #1A1200;
+      border-color: var(--amber);
+      font-weight: 600;
+    }
+
+    #addFlightBtn:hover {
+      filter: brightness(1.08);
+    }
+
+    .stat-pill {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-faint);
+      padding: 6px 10px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border-soft);
+      border-radius: 20px;
+    }
+
+    .stat-pill b {
+      color: var(--text);
+    }
+
+    .sim-grid {
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      gap: 16px;
+    }
+
+    @media (max-width:980px) {
+      .sim-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .sim-grid.panel-hidden {
+      grid-template-columns: 1fr;
+    }
+
+    .radar-box {
+      position: relative;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    #radar {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 1000/600;
+      cursor: crosshair;
+    }
+
+    .radar-sweep {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: conic-gradient(from 0deg, color-mix(in srgb, var(--cyan) 10%, transparent), transparent 20%);
+      animation: sweep 6s linear infinite;
+      opacity: .5;
+      mix-blend-mode: screen;
+    }
+
+    @keyframes sweep {
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .side-col {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .panel {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .panel-title {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border-soft);
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      letter-spacing: .04em;
+      color: var(--text-faint);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .fleet-list {
+      max-height: 260px;
+      overflow-y: auto;
+      padding: 8px;
+    }
+
+    .fleet-empty {
+      color: var(--text-faint);
+      font-size: 13px;
+      padding: 18px 12px;
+      text-align: center;
+    }
+
+    .flight-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-soft);
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 6px;
+      cursor: pointer;
+      transition: .15s border-color;
+    }
+
+    .flight-card:hover {
+      border-color: var(--text-faint);
+    }
+
+    .flight-card .row1 {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+
+    .flight-card .fid {
+      font-family: var(--font-mono);
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .badge {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+    }
+
+    .badge.cruising {
+      background: color-mix(in srgb, var(--cyan) 18%, transparent);
+      color: var(--cyan);
+    }
+
+    .badge.conflict_detected {
+      background: color-mix(in srgb, var(--rose) 20%, transparent);
+      color: var(--rose);
+    }
+
+    .badge.rerouting {
+      background: color-mix(in srgb, var(--amber) 20%, transparent);
+      color: var(--amber);
+    }
+
+    .badge.holding {
+      background: color-mix(in srgb, var(--violet) 20%, transparent);
+      color: var(--violet);
+    }
+
+    .badge.landed {
+      background: color-mix(in srgb, var(--green) 20%, transparent);
+      color: var(--green);
+    }
+
+    .flight-card .meta {
+      display: flex;
+      gap: 10px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-faint);
+    }
+
+    .flight-card .fuelbar {
+      height: 3px;
+      background: var(--border);
+      border-radius: 2px;
+      margin-top: 8px;
+      overflow: hidden;
+    }
+
+    .flight-card .fuelbar i {
+      display: block;
+      height: 100%;
+      background: var(--green);
+    }
+
+    .log-list {
+      max-height: 220px;
+      overflow-y: auto;
+      padding: 10px 12px;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+    }
+
+    .log-line {
+      margin-bottom: 7px;
+      line-height: 1.45;
+      color: var(--text-dim);
+    }
+
+    .log-line .t {
+      color: var(--text-faint);
+      margin-right: 6px;
+    }
+
+    .log-line.conflict {
+      color: var(--rose);
+    }
+
+    .log-line.reroute {
+      color: var(--amber);
+    }
+
+    .log-line.holding {
+      color: var(--violet);
+    }
+
+    .log-line.landed {
+      color: var(--green);
+    }
+
+    .log-empty {
+      color: var(--text-faint);
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 10px 14px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-faint);
+    }
+
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .legend i {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    /* Config drawer */
+    .drawer-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .5);
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s;
+    }
+
+    .drawer-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .drawer {
+      position: fixed;
+      top: 0;
+      right: -380px;
+      width: 360px;
+      height: 100%;
+      background: var(--bg-elevated);
+      border-left: 1px solid var(--border);
+      z-index: 101;
+      transition: right .25s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .drawer.open {
+      right: 0;
+    }
+
+    .drawer-head {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--border-soft);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .drawer-head h3 {
+      margin: 0;
+      font-size: 16px;
+      font-family: var(--font-mono);
+    }
+
+    .drawer-close {
+      background: none;
+      border: none;
+      color: var(--text-faint);
+      font-size: 20px;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .drawer-body {
+      padding: 18px 20px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .field {
+      margin-bottom: 20px;
+    }
+
+    .field label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12.5px;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+      margin-bottom: 8px;
+    }
+
+    .field label b {
+      color: var(--text);
+    }
+
+    .field input[type=range] {
+      width: 100%;
+      accent-color: var(--amber);
+    }
+
+    .field .readout {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-soft);
+      border-radius: 6px;
+      padding: 10px 12px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--text-dim);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .field .readout b {
+      color: var(--text);
+    }
+
+    .drawer-foot {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border-soft);
+      display: flex;
+      gap: 10px;
+    }
+
+    .drawer-foot .btn {
+      flex: 1;
+      justify-content: center;
+    }
+
+    footer {
+      text-align: center;
+      padding: 36px 20px 50px;
+      color: var(--text-faint);
+      font-size: 12.5px;
+      font-family: var(--font-mono);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+
+      .radar-sweep,
+      .scroll-cta svg {
+        animation: none;
+      }
+    }
+  </style>
 </head>
+
 <body>
 
-<div class="topbar">
-  <div class="brand"><span class="dot"></span> SKYLANE ATC</div>
-  <div class="topnav">
-    <a href="#brief">Brief</a>
-    <a href="#algorithm">Algorithm</a>
-    <a href="#simulation">Simulation</a>
-  </div>
-</div>
-
-<!-- ================= EXPLANATION ================= -->
-<div class="wrap">
-  <div class="hero" id="brief">
-    <div class="kicker">MULTI-AGENT SYSTEMS · INFORMED SEARCH · DYNAMIC PLANNING</div>
-    <h1>Every aircraft flies itself out of trouble.</h1>
-    <p class="lead">A simulated airspace where each aircraft is an autonomous agent — sensing nearby traffic, predicting conflicts before they happen, and negotiating a safe reroute with no central controller telling it what to do.</p>
-    <div class="hero-actions">
-      <a class="btn primary" href="#simulation">Run the simulation ↓</a>
-      <a class="btn" href="#algorithm">Read the algorithm</a>
+  <div class="topbar">
+    <div class="brand"><span class="dot"></span> SKYLANE ATC</div>
+    <div class="topnav">
+      <a href="#brief">Brief</a>
+      <a href="#algorithm">Algorithm</a>
+      <a href="#simulation">Simulation</a>
     </div>
   </div>
 
-  <section class="article">
-    <h2><span class="num">01</span>The problem</h2>
-    <p>Modern airspace is dense and getting denser — tens of thousands of aircraft airborne at once, all funneled through the same corridors and approach paths. Today, keeping them apart is still largely the job of a small number of human controllers watching a radar screen. That works, until it doesn't: fatigue, understaffing, and a missed call are enough to turn two aircraft's flight paths into a near-miss.</p>
-    <p>The system built here takes a different approach. Instead of one central authority tracking every aircraft, <strong>each aircraft is its own agent</strong> — it senses what's around it, predicts where conflicts will happen before they're urgent, and reroutes itself, in coordination with the other aircraft involved.</p>
-
-    <h2><span class="num">02</span>Framing it as an agent — PEAS</h2>
-    <p>Before writing any search or planning logic, it helps to state precisely what each aircraft agent is trying to do, where it operates, and what it can sense and act on.</p>
-    <table class="peas">
-      <tr><th>Performance</th><td>Avoid collisions, keep safe separation, minimize fuel burn, minimize distance and delay, reach the destination.</td></tr>
-      <tr><th>Environment</th><td>A shared, dynamic airspace containing other aircraft, restricted zones, and changing conditions.</td></tr>
-      <tr><th>Actuators</th><td>Change heading, change altitude, change speed, select or replan a route.</td></tr>
-      <tr><th>Sensors</th><td>Own position, velocity and fuel; positions and predicted trajectories of nearby aircraft.</td></tr>
-    </table>
-    <div class="formula">
-      <span class="k">Cost</span> = (CollisionRisk × LargePenalty) + DistanceCost + FuelCost + DelayCost
-      <small>The collision term dominates every other term — an agent will never take a shorter route that creates an unsafe situation.</small>
-    </div>
-
-    <h2><span class="num">03</span>What kind of environment is this?</h2>
-    <p>The nature of the environment determines which techniques even apply. This one is:</p>
-    <div class="prop-grid">
-      <div class="prop-card"><div class="name">Multi-agent</div><div class="desc">Many aircraft act at once, and each one's decisions change what the others should do.</div></div>
-      <div class="prop-card"><div class="name">Dynamic</div><div class="desc">The airspace keeps changing while an agent is still deciding — it can't pause the world to think.</div></div>
-      <div class="prop-card"><div class="name">Partially observable</div><div class="desc">An aircraft senses nearby traffic, not the entire global airspace at once.</div></div>
-      <div class="prop-card"><div class="name">Sequential</div><div class="desc">Today's reroute shapes tomorrow's conflicts — decisions compound over time.</div></div>
-      <div class="prop-card"><div class="name">Stochastic</div><div class="desc">Weather and other aircraft's behavior can't be predicted with certainty.</div></div>
-      <div class="prop-card"><div class="name">Cooperative / mixed-motive</div><div class="desc">All agents share a safety goal, but each also wants its own fastest, cheapest route.</div></div>
-    </div>
-  </section>
-</div>
-
-<div class="wrap" id="algorithm">
-  <section class="article">
-    <h2><span class="num">04</span>How each agent thinks</h2>
-    <p><strong>Step 1 — the airspace is a graph.</strong> Waypoints are laid out across the sky as nodes; edges connect nearby waypoints. Every aircraft's flight is, underneath, a path-search problem on this graph.</p>
-
-    <p><strong>Step 2 — plan the initial route with A*.</strong> A* is the natural fit: unlike breadth/depth-first search it accounts for cost, and unlike Dijkstra it doesn't waste time exploring in every direction — the heuristic keeps it aimed at the destination.</p>
-    <div class="formula">
-      <span class="k">f(n)</span> = g(n) + h(n)
-      <small>g(n) — actual cost from the start to node n. h(n) — straight-line estimate from n to the destination. A* always expands the node with the lowest f(n) next.</small>
-    </div>
-
-    <p><strong>Step 3 — predict conflicts before they happen.</strong> Every tick, each agent projects its own and nearby aircraft's positions a few seconds into the future along their current paths — not just checking where everyone is <em>right now</em>.</p>
-    <div class="formula">
-      <span class="k">IF</span> distance(predicted_A(t), predicted_B(t)) &lt; SafetyThreshold <span class="k">for any future t</span> → conflict predicted
-    </div>
-
-    <p><strong>Steps 4–5 — resolve it.</strong> When a conflict is predicted, the system doesn't reroute everyone — it reasons about who should move.</p>
-    <div class="case-list">
-      <div class="case"><span class="letter">A</span><div class="body"><b>Two aircraft, one conflict</b><span>The lower-priority aircraft reroutes around the conflict zone; the higher-priority one holds its course.</span></div></div>
-      <div class="case"><span class="letter">B</span><div class="body"><b>Three or more aircraft, shared zone</b><span>The group is sorted by priority. The top one keeps its path; each other aircraft reroutes around everyone already committed above it.</span></div></div>
-      <div class="case"><span class="letter">C</span><div class="body"><b>No safe alternative exists</b><span>If every candidate route is still unsafe, the aircraft holds — slows down and loiters — and re-attempts pathfinding shortly after.</span></div></div>
-      <div class="case"><span class="letter">D</span><div class="body"><b>Priority tie</b><span>Broken deterministically: the lower-numbered flight yields, so the system never stalls with two aircraft waiting on each other.</span></div></div>
-      <div class="case"><span class="letter">E</span><div class="body"><b>Cascading conflicts</b><span>A reroute can create a new conflict with a third aircraft. The continuous observe–replan loop below catches this on the very next tick.</span></div></div>
-    </div>
-
-    <p><strong>Step 6 — never stop replanning.</strong> No aircraft plans once and commits blindly. Every agent runs this loop continuously, for as long as it's airborne:</p>
-    <div class="loop">
-      <span class="step">Observe</span><span class="arrow">→</span>
-      <span class="step">Detect</span><span class="arrow">→</span>
-      <span class="step">Reason</span><span class="arrow">→</span>
-      <span class="step">Replan (A*)</span><span class="arrow">→</span>
-      <span class="step">Act</span><span class="arrow">→</span>
-      <span class="step">Re-observe</span>
-    </div>
-
-    <div class="scroll-cta">
-      <span>The simulation below implements exactly this loop, live</span>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
-    </div>
-  </section>
-</div>
-
-<!-- ================= SIMULATION ================= -->
-<div class="sim-section" id="simulation">
-  <div class="sim-wrap">
-    <div class="sim-header">
-      <div>
-        <h2>Live airspace</h2>
-        <p>Add flights, tune their fuel and priority, and watch the observe → detect → reason → replan loop run in real time.</p>
+  <!-- ================= EXPLANATION ================= -->
+  <div class="wrap">
+    <div class="hero" id="brief">
+      <div class="kicker">MULTI-AGENT SYSTEMS · INFORMED SEARCH · DYNAMIC PLANNING</div>
+      <h1>Every aircraft flies itself out of trouble.</h1>
+      <p class="lead">A simulated airspace where each aircraft is an autonomous agent — sensing nearby traffic,
+        predicting conflicts before they happen, and negotiating a safe reroute with no central controller telling it
+        what to do.</p>
+      <div class="hero-actions">
+        <a class="btn primary" href="#simulation">Run the simulation ↓</a>
+        <a class="btn" href="#algorithm">Read the algorithm</a>
       </div>
     </div>
 
-    <div class="toolbar">
-      <button class="icon-btn" id="addFlightBtn">+ Add flight</button>
-      <div class="sep"></div>
-      <div class="group">
-        <button class="icon-btn active" id="playPauseBtn">⏸ Pause</button>
-        <button class="icon-btn" data-speed="0.5">0.5×</button>
-        <button class="icon-btn active" data-speed="1">1×</button>
-        <button class="icon-btn" data-speed="2">2×</button>
-      </div>
-      <div class="sep"></div>
-      <button class="icon-btn" id="togglePanelBtn">Hide panel</button>
-      <button class="icon-btn" id="resetBtn">Reset</button>
-      <div style="flex:1"></div>
-      <span class="stat-pill">Active: <b id="statActive">0</b></span>
-      <span class="stat-pill">Conflicts resolved: <b id="statResolved">0</b></span>
-      <span class="stat-pill">Holding: <b id="statHolding">0</b></span>
-    </div>
+    <section class="article">
+      <h2><span class="num">01</span>The problem</h2>
+      <p>Modern airspace is dense and getting denser — tens of thousands of aircraft airborne at once, all funneled
+        through the same corridors and approach paths. Today, keeping them apart is still largely the job of a small
+        number of human controllers watching a radar screen. That works, until it doesn't: fatigue, understaffing, and a
+        missed call are enough to turn two aircraft's flight paths into a near-miss.</p>
+      <p>The system built here takes a different approach. Instead of one central authority tracking every aircraft,
+        <strong>each aircraft is its own agent</strong> — it senses what's around it, predicts where conflicts will
+        happen before they're urgent, and reroutes itself, in coordination with the other aircraft involved.</p>
 
-    <div class="sim-grid" id="simGrid">
-      <div class="radar-box">
-        <canvas id="radar" width="1000" height="600"></canvas>
-        <div class="radar-sweep"></div>
+      <h2><span class="num">02</span>Framing it as an agent — PEAS</h2>
+      <p>Before writing any search or planning logic, it helps to state precisely what each aircraft agent is trying to
+        do, where it operates, and what it can sense and act on.</p>
+      <table class="peas">
+        <tr>
+          <th>Performance</th>
+          <td>Avoid collisions, keep safe separation, minimize fuel burn, minimize distance and delay, reach the
+            destination.</td>
+        </tr>
+        <tr>
+          <th>Environment</th>
+          <td>A shared, dynamic airspace containing other aircraft, restricted zones, and changing conditions.</td>
+        </tr>
+        <tr>
+          <th>Actuators</th>
+          <td>Change heading, change altitude, change speed, select or replan a route.</td>
+        </tr>
+        <tr>
+          <th>Sensors</th>
+          <td>Own position, velocity and fuel; positions and predicted trajectories of nearby aircraft.</td>
+        </tr>
+      </table>
+      <div class="formula">
+        <span class="k">Cost</span> = (CollisionRisk × LargePenalty) + DistanceCost + FuelCost + DelayCost
+        <small>The collision term dominates every other term — an agent will never take a shorter route that creates an
+          unsafe situation.</small>
       </div>
 
-      <div class="side-col" id="sideCol">
-        <div class="panel">
-          <div class="panel-title">FLEET <span id="fleetCount">0 aircraft</span></div>
-          <div class="fleet-list" id="fleetList">
-            <div class="fleet-empty">No aircraft yet — add a flight to begin.</div>
-          </div>
+      <h2><span class="num">03</span>What kind of environment is this?</h2>
+      <p>The nature of the environment determines which techniques even apply. This one is:</p>
+      <div class="prop-grid">
+        <div class="prop-card">
+          <div class="name">Multi-agent</div>
+          <div class="desc">Many aircraft act at once, and each one's decisions change what the others should do.</div>
         </div>
-        <div class="panel">
-          <div class="panel-title">EVENT LOG</div>
-          <div class="log-list" id="logList">
-            <div class="log-empty">Waiting for activity…</div>
-          </div>
+        <div class="prop-card">
+          <div class="name">Dynamic</div>
+          <div class="desc">The airspace keeps changing while an agent is still deciding — it can't pause the world to
+            think.</div>
         </div>
-        <div class="panel">
-          <div class="legend">
-            <span><i style="background:var(--cyan)"></i>Cruising</span>
-            <span><i style="background:var(--rose)"></i>Conflict</span>
-            <span><i style="background:var(--amber)"></i>Rerouting</span>
-            <span><i style="background:var(--violet)"></i>Holding</span>
-            <span><i style="background:var(--green)"></i>Landed</span>
-          </div>
+        <div class="prop-card">
+          <div class="name">Partially observable</div>
+          <div class="desc">An aircraft senses nearby traffic, not the entire global airspace at once.</div>
+        </div>
+        <div class="prop-card">
+          <div class="name">Sequential</div>
+          <div class="desc">Today's reroute shapes tomorrow's conflicts — decisions compound over time.</div>
+        </div>
+        <div class="prop-card">
+          <div class="name">Stochastic</div>
+          <div class="desc">Weather and other aircraft's behavior can't be predicted with certainty.</div>
+        </div>
+        <div class="prop-card">
+          <div class="name">Cooperative / mixed-motive</div>
+          <div class="desc">All agents share a safety goal, but each also wants its own fastest, cheapest route.</div>
         </div>
       </div>
+    </section>
+  </div>
+
+  <div class="wrap" id="algorithm">
+    <section class="article">
+      <h2><span class="num">04</span>How each agent thinks</h2>
+      <p><strong>Step 1 — the airspace is a graph.</strong> Waypoints are laid out across the sky as nodes; edges
+        connect nearby waypoints. Every aircraft's flight is, underneath, a path-search problem on this graph.</p>
+
+      <p><strong>Step 2 — plan the initial route with A*.</strong> A* is the natural fit: unlike breadth/depth-first
+        search it accounts for cost, and unlike Dijkstra it doesn't waste time exploring in every direction — the
+        heuristic keeps it aimed at the destination.</p>
+      <div class="formula">
+        <span class="k">f(n)</span> = g(n) + h(n)
+        <small>g(n) — actual cost from the start to node n. h(n) — straight-line estimate from n to the destination. A*
+          always expands the node with the lowest f(n) next.</small>
+      </div>
+
+      <p><strong>Step 3 — predict conflicts before they happen.</strong> Every tick, each agent projects its own and
+        nearby aircraft's positions a few seconds into the future along their current paths — not just checking where
+        everyone is <em>right now</em>.</p>
+      <div class="formula">
+        <span class="k">IF</span> distance(predicted_A(t), predicted_B(t)) &lt; SafetyThreshold <span class="k">for any
+          future t</span> → conflict predicted
+      </div>
+
+      <p><strong>Steps 4–5 — resolve it.</strong> When a conflict is predicted, the system doesn't reroute everyone — it
+        reasons about who should move.</p>
+      <div class="case-list">
+        <div class="case"><span class="letter">A</span>
+          <div class="body"><b>Two aircraft, one conflict</b><span>The lower-priority aircraft reroutes around the
+              conflict zone; the higher-priority one holds its course.</span></div>
+        </div>
+        <div class="case"><span class="letter">B</span>
+          <div class="body"><b>Three or more aircraft, shared zone</b><span>The group is sorted by priority. The top one
+              keeps its path; each other aircraft reroutes around everyone already committed above it.</span></div>
+        </div>
+        <div class="case"><span class="letter">C</span>
+          <div class="body"><b>No safe alternative exists</b><span>If every candidate route is still unsafe, the
+              aircraft holds — slows down and loiters — and re-attempts pathfinding shortly after.</span></div>
+        </div>
+        <div class="case"><span class="letter">D</span>
+          <div class="body"><b>Priority tie</b><span>Broken deterministically: the lower-numbered flight yields, so the
+              system never stalls with two aircraft waiting on each other.</span></div>
+        </div>
+        <div class="case"><span class="letter">E</span>
+          <div class="body"><b>Cascading conflicts</b><span>A reroute can create a new conflict with a third aircraft.
+              The continuous observe–replan loop below catches this on the very next tick.</span></div>
+        </div>
+      </div>
+
+      <p><strong>Step 6 — never stop replanning.</strong> No aircraft plans once and commits blindly. Every agent runs
+        this loop continuously, for as long as it's airborne:</p>
+      <div class="loop">
+        <span class="step">Observe</span><span class="arrow">→</span>
+        <span class="step">Detect</span><span class="arrow">→</span>
+        <span class="step">Reason</span><span class="arrow">→</span>
+        <span class="step">Replan (A*)</span><span class="arrow">→</span>
+        <span class="step">Act</span><span class="arrow">→</span>
+        <span class="step">Re-observe</span>
+      </div>
+
+      <div class="scroll-cta">
+        <span>The simulation below implements exactly this loop, live</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 5v14M5 12l7 7 7-7" />
+        </svg>
+      </div>
+    </section>
+  </div>
+
+  <!-- ================= SIMULATION ================= -->
+  <div class="sim-section" id="simulation">
+    <div class="sim-wrap">
+      <div class="sim-header">
+        <div>
+          <h2>Live airspace</h2>
+          <p>Add flights, tune their fuel and priority, and watch the observe → detect → reason → replan loop run in
+            real time.</p>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <button class="icon-btn" id="addFlightBtn">+ Add flight</button>
+        <div class="sep"></div>
+        <div class="group">
+          <button class="icon-btn active" id="playPauseBtn">⏸ Pause</button>
+          <button class="icon-btn" data-speed="0.5">0.5×</button>
+          <button class="icon-btn active" data-speed="1">1×</button>
+          <button class="icon-btn" data-speed="2">2×</button>
+        </div>
+        <div class="sep"></div>
+        <button class="icon-btn" id="togglePanelBtn">Hide panel</button>
+        <button class="icon-btn" id="resetBtn">Reset</button>
+        <div style="flex:1"></div>
+        <span class="stat-pill">Active: <b id="statActive">0</b></span>
+        <span class="stat-pill">Conflicts resolved: <b id="statResolved">0</b></span>
+        <span class="stat-pill">Holding: <b id="statHolding">0</b></span>
+      </div>
+
+      <div class="sim-grid" id="simGrid">
+        <div class="radar-box">
+          <canvas id="radar" width="1000" height="600"></canvas>
+          <div class="radar-sweep"></div>
+        </div>
+
+        <div class="side-col" id="sideCol">
+          <div class="panel">
+            <div class="panel-title">FLEET <span id="fleetCount">0 aircraft</span></div>
+            <div class="fleet-list" id="fleetList">
+              <div class="fleet-empty">No aircraft yet — add a flight to begin.</div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-title">EVENT LOG</div>
+            <div class="log-list" id="logList">
+              <div class="log-empty">Waiting for activity…</div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="legend">
+              <span><i style="background:var(--cyan)"></i>Cruising</span>
+              <span><i style="background:var(--rose)"></i>Conflict</span>
+              <span><i style="background:var(--amber)"></i>Rerouting</span>
+              <span><i style="background:var(--violet)"></i>Holding</span>
+              <span><i style="background:var(--green)"></i>Landed</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
-</div>
 
-<footer>Skylane ATC — a multi-agent collision avoidance &amp; dynamic rerouting simulation · built for demonstration</footer>
+  <footer>Skylane ATC — a multi-agent collision avoidance &amp; dynamic rerouting simulation · built for demonstration
+  </footer>
 
-<!-- ================= CONFIG DRAWER ================= -->
-<div class="drawer-backdrop" id="drawerBackdrop"></div>
-<div class="drawer" id="drawer">
-  <div class="drawer-head">
-    <h3 id="drawerTitle">FLIGHT —</h3>
-    <button class="drawer-close" id="drawerClose">✕</button>
+  <!-- ================= CONFIG DRAWER ================= -->
+  <div class="drawer-backdrop" id="drawerBackdrop"></div>
+  <div class="drawer" id="drawer">
+    <div class="drawer-head">
+      <h3 id="drawerTitle">FLIGHT —</h3>
+      <button class="drawer-close" id="drawerClose">✕</button>
+    </div>
+    <div class="drawer-body">
+      <div class="field">
+        <label>Status</label>
+        <div class="readout"><span id="cfgStatusText">—</span> <span class="badge" id="cfgStatusBadge">—</span></div>
+      </div>
+      <div class="field">
+        <label>Route distance</label>
+        <div class="readout"><span>start → destination</span><b id="cfgDistance">—</b></div>
+      </div>
+      <div class="field">
+        <label>Fuel remaining <b id="cfgFuelVal">—</b></label>
+        <input type="range" id="cfgFuel" min="100" max="2000" step="10">
+      </div>
+      <div class="field">
+        <label>Cruise speed <b id="cfgSpeedVal">—</b></label>
+        <input type="range" id="cfgSpeed" min="20" max="100" step="1">
+      </div>
+      <div class="field">
+        <label>Safety priority weight <b id="cfgPriorityVal">—</b></label>
+        <input type="range" id="cfgPriority" min="0" max="100" step="1">
+      </div>
+      <div class="field">
+        <label>Fuel cost weight <b id="cfgFuelWVal">—</b></label>
+        <input type="range" id="cfgFuelW" min="0" max="100" step="1">
+      </div>
+      <div class="field">
+        <label>Delay cost weight <b id="cfgDelayWVal">—</b></label>
+        <input type="range" id="cfgDelayW" min="0" max="100" step="1">
+      </div>
+      <div class="field">
+        <label>Computed priority score</label>
+        <div class="readout"><span>higher goes first</span><b id="cfgPriorityScore">—</b></div>
+      </div>
+    </div>
+    <div class="drawer-foot">
+      <button class="btn" id="cfgRemove">Remove flight</button>
+    </div>
   </div>
-  <div class="drawer-body">
-    <div class="field">
-      <label>Status</label>
-      <div class="readout"><span id="cfgStatusText">—</span> <span class="badge" id="cfgStatusBadge">—</span></div>
-    </div>
-    <div class="field">
-      <label>Route distance</label>
-      <div class="readout"><span>start → destination</span><b id="cfgDistance">—</b></div>
-    </div>
-    <div class="field">
-      <label>Fuel remaining <b id="cfgFuelVal">—</b></label>
-      <input type="range" id="cfgFuel" min="100" max="2000" step="10">
-    </div>
-    <div class="field">
-      <label>Cruise speed <b id="cfgSpeedVal">—</b></label>
-      <input type="range" id="cfgSpeed" min="20" max="100" step="1">
-    </div>
-    <div class="field">
-      <label>Safety priority weight <b id="cfgPriorityVal">—</b></label>
-      <input type="range" id="cfgPriority" min="0" max="100" step="1">
-    </div>
-    <div class="field">
-      <label>Fuel cost weight <b id="cfgFuelWVal">—</b></label>
-      <input type="range" id="cfgFuelW" min="0" max="100" step="1">
-    </div>
-    <div class="field">
-      <label>Delay cost weight <b id="cfgDelayWVal">—</b></label>
-      <input type="range" id="cfgDelayW" min="0" max="100" step="1">
-    </div>
-    <div class="field">
-      <label>Computed priority score</label>
-      <div class="readout"><span>higher goes first</span><b id="cfgPriorityScore">—</b></div>
-    </div>
-  </div>
-  <div class="drawer-foot">
-    <button class="btn" id="cfgRemove">Remove flight</button>
-  </div>
-</div>
 
-<script>
-(function(){
-  "use strict";
+  <script>
+    (function () {
+      "use strict";
 
-  /* ============================================================
-     GRAPH SETUP — waypoint graph the A* search runs on
-  ============================================================ */
-  const LW = 1000, LH = 600;
-  const COLS = 11, ROWS = 7;
-  const cellW = LW / COLS, cellH = LH / ROWS;
+      /* ============================================================
+         GRAPH SETUP — waypoint graph the A* search runs on
+      ============================================================ */
+      const LW = 1000, LH = 600;
+      const COLS = 11, ROWS = 7;
+      const cellW = LW / COLS, cellH = LH / ROWS;
 
-  function seededRand(seed){
-    let s = seed;
-    return function(){ s = (s * 9301 + 49297) % 233280; return s / 233280; };
-  }
-  const rnd = seededRand(1337);
+      function seededRand(seed) {
+        let s = seed;
+        return function () { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+      }
+      const rnd = seededRand(1337);
 
-  const nodes = [];
-  for(let r=0;r<ROWS;r++){
-    for(let c=0;c<COLS;c++){
-      const jx = (rnd()-0.5) * cellW * 0.55;
-      const jy = (rnd()-0.5) * cellH * 0.55;
-      const x = c*cellW + cellW/2 + jx;
-      const y = r*cellH + cellH/2 + jy;
-      const isBorder = (c===0 || c===COLS-1 || r===0 || r===ROWS-1);
-      nodes.push({ idx: nodes.length, c, r, x, y, isBorder });
-    }
-  }
-  function nodeIndex(c,r){ return r*COLS + c; }
-
-  const adj = nodes.map(()=>[]);
-  for(let r=0;r<ROWS;r++){
-    for(let c=0;c<COLS;c++){
-      const a = nodeIndex(c,r);
-      for(let dr=-1;dr<=1;dr++){
-        for(let dc=-1;dc<=1;dc++){
-          if(dr===0 && dc===0) continue;
-          const nc=c+dc, nr=r+dr;
-          if(nc<0||nc>=COLS||nr<0||nr>=ROWS) continue;
-          const b = nodeIndex(nc,nr);
-          const dist = Math.hypot(nodes[a].x-nodes[b].x, nodes[a].y-nodes[b].y);
-          adj[a].push({ to:b, cost:dist });
+      const nodes = [];
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          const jx = (rnd() - 0.5) * cellW * 0.55;
+          const jy = (rnd() - 0.5) * cellH * 0.55;
+          const x = c * cellW + cellW / 2 + jx;
+          const y = r * cellH + cellH / 2 + jy;
+          const isBorder = (c === 0 || c === COLS - 1 || r === 0 || r === ROWS - 1);
+          nodes.push({ idx: nodes.length, c, r, x, y, isBorder });
         }
       }
-    }
-  }
-  const borderNodes = nodes.filter(n=>n.isBorder);
+      function nodeIndex(c, r) { return r * COLS + c; }
 
-  function dist(a,b){ return Math.hypot(a.x-b.x, a.y-b.y); }
-
-  function nearestNode(pos){
-    let best=0, bd=Infinity;
-    for(const n of nodes){ const d=dist(n,pos); if(d<bd){bd=d;best=n.idx;} }
-    return best;
-  }
-
-  /* A* search. penaltyFn(nodeIdx) -> extra cost added when entering that node */
-  function astar(startIdx, goalIdx, penaltyFn){
-    penaltyFn = penaltyFn || (()=>0);
-    const open = new Set([startIdx]);
-    const cameFrom = {};
-    const g = {}; g[startIdx]=0;
-    const f = {}; f[startIdx]=dist(nodes[startIdx],nodes[goalIdx]);
-    const closed = new Set();
-
-    while(open.size){
-      let current=null, bestF=Infinity;
-      for(const n of open){ if((f[n]??Infinity)<bestF){bestF=f[n];current=n;} }
-      if(current===goalIdx){
-        const path=[current];
-        while(cameFrom[current]!==undefined){ current=cameFrom[current]; path.push(current); }
-        path.reverse();
-        return path.map(i=>({x:nodes[i].x,y:nodes[i].y,idx:i}));
-      }
-      open.delete(current); closed.add(current);
-      for(const edge of adj[current]){
-        if(closed.has(edge.to)) continue;
-        const tentative = g[current] + edge.cost + penaltyFn(edge.to);
-        if(tentative < (g[edge.to] ?? Infinity)){
-          cameFrom[edge.to]=current;
-          g[edge.to]=tentative;
-          f[edge.to]=tentative + dist(nodes[edge.to],nodes[goalIdx]);
-          open.add(edge.to);
-        }
-      }
-    }
-    return null; // no path found
-  }
-
-  /* ============================================================
-     STATE
-  ============================================================ */
-  let aircraft = [];
-  let nextId = 1;
-  let running = true;
-  let simSpeed = 1;
-  let resolvedCount = 0;
-  const SAFETY_RADIUS = 34;
-  const LOOKAHEAD_SAMPLES = [0,2,4,6,8];
-  const PENALTY_RADIUS = 90;
-  const colors = ['#4FD1E8','#F5A623','#B18CFF','#4ADE80','#FB6B6B','#7DD3FC','#FDBA74'];
-
-  function log(msg, cls){
-    const el = document.getElementById('logList');
-    if(el.querySelector('.log-empty')) el.innerHTML='';
-    const line = document.createElement('div');
-    line.className = 'log-line' + (cls?(' '+cls):'');
-    const now = new Date();
-    const t = now.toLocaleTimeString([], {hour12:false});
-    line.innerHTML = '<span class="t">'+t+'</span>' + msg;
-    el.prepend(line);
-    while(el.children.length>60) el.removeChild(el.lastChild);
-  }
-
-  function randRange(a,b){ return a + Math.random()*(b-a); }
-
-  function spawnAircraft(){
-    // pick a border node, then a far-enough border node for destination
-    const startNode = borderNodes[Math.floor(Math.random()*borderNodes.length)];
-    const candidates = borderNodes
-      .filter(n=>n.idx!==startNode.idx)
-      .map(n=>({n, d: dist(n,startNode)}))
-      .sort((a,b)=>b.d-a.d)
-      .slice(0, Math.max(4, Math.floor(borderNodes.length*0.4)));
-    const destNode = candidates[Math.floor(Math.random()*candidates.length)].n;
-
-    const path = astar(startNode.idx, destNode.idx);
-    if(!path) return;
-
-    const id = nextId++;
-    const fuel = Math.round(randRange(500,2000));
-    const ac = {
-      id,
-      color: colors[(id-1)%colors.length],
-      pos: {x: path[0].x, y: path[0].y},
-      heading: 0,
-      queue: path.slice(1),          // upcoming waypoints
-      fullPath: path.slice(),        // for distance calc / drawing reference
-      startNode: startNode.idx,
-      destNode: destNode.idx,
-      speed: Math.round(randRange(30,70)),
-      fuel: fuel,
-      fuelMax: fuel,
-      fuelCostWeight: Math.round(randRange(20,80)),
-      delayCostWeight: Math.round(randRange(20,80)),
-      priorityWeight: Math.round(randRange(10,90)),
-      altitude: Math.round(randRange(28,40))*1000,
-      status: 'cruising',
-      holdTimer: 0,
-      distance: pathLength(path),
-      landed:false,
-    };
-    aircraft.push(ac);
-    log('Flight <b style="color:'+ac.color+'">#'+id+'</b> spawned — A* route computed, '+Math.round(ac.distance)+' NM.', null);
-    renderFleetList();
-  }
-
-  function pathLength(pts){
-    let d=0;
-    for(let i=1;i<pts.length;i++) d += dist(pts[i-1],pts[i]);
-    return d;
-  }
-
-  function priorityScore(ac){
-    const fuelUrgency = (1 - ac.fuel/ac.fuelMax) * 60; // less fuel -> more urgent
-    return fuelUrgency + ac.priorityWeight*0.4;
-  }
-
-  /* Predict an aircraft's position `tSec` seconds into the future
-     along its current queued path, without mutating state. */
-  function predictPosition(ac, tSec){
-    let remaining = ac.speed * simSpeed * tSec;
-    let p = {x:ac.pos.x, y:ac.pos.y};
-    for(let i=0;i<ac.queue.length;i++){
-      const target = ac.queue[i];
-      const d = dist(p,target);
-      if(d<=remaining){ remaining-=d; p={x:target.x,y:target.y}; }
-      else {
-        const t = d===0?0:remaining/d;
-        p = { x: p.x+(target.x-p.x)*t, y: p.y+(target.y-p.y)*t };
-        return {pos:p, landed:false};
-      }
-    }
-    return {pos:p, landed:true};
-  }
-
-  /* ============================================================
-     CONFLICT DETECTION + RESOLUTION
-  ============================================================ */
-  function detectConflicts(list){
-    const pairs = [];
-    for(let i=0;i<list.length;i++){
-      for(let j=i+1;j<list.length;j++){
-        const a=list[i], b=list[j];
-        if(a.status==='landed'||b.status==='landed') continue;
-        for(const t of LOOKAHEAD_SAMPLES){
-          const pa = predictPosition(a,t);
-          const pb = predictPosition(b,t);
-          if(pa.landed || pb.landed) continue;
-          if(dist(pa.pos,pb.pos) < SAFETY_RADIUS){
-            pairs.push({a,b,t,point:{x:(pa.pos.x+pb.pos.x)/2,y:(pa.pos.y+pb.pos.y)/2}});
-            break;
-          }
-        }
-      }
-    }
-    return pairs;
-  }
-
-  function clusterConflicts(pairs){
-    const parent = {};
-    function find(x){ if(parent[x]===undefined) parent[x]=x; if(parent[x]!==x) parent[x]=find(parent[x]); return parent[x]; }
-    function union(x,y){ parent[find(x)] = find(y); }
-    const conflictPoints = {};
-    for(const p of pairs){
-      union(p.a.id, p.b.id);
-      conflictPoints[p.a.id] = conflictPoints[p.a.id] || [];
-      conflictPoints[p.a.id].push(p.point);
-      conflictPoints[p.b.id] = conflictPoints[p.b.id] || [];
-      conflictPoints[p.b.id].push(p.point);
-    }
-    const groups = {};
-    const ids = new Set(pairs.flatMap(p=>[p.a.id,p.b.id]));
-    for(const id of ids){
-      const root = find(id);
-      groups[root] = groups[root] || [];
-      const ac = aircraft.find(x=>x.id===id);
-      groups[root].push(ac);
-    }
-    return {clusters: Object.values(groups), conflictPoints};
-  }
-
-  function tryReroute(ac, avoidPoints){
-    const startIdx = nearestNode(ac.pos);
-    const penaltyFn = (nodeIdx)=>{
-      let penalty = 0;
-      const n = nodes[nodeIdx];
-      for(const pt of avoidPoints){
-        const d = dist(n,pt);
-        if(d < PENALTY_RADIUS) penalty += (PENALTY_RADIUS-d) * 12;
-      }
-      return penalty;
-    };
-    const newPath = astar(startIdx, ac.destNode, penaltyFn);
-    if(!newPath || newPath.length<1) return false;
-
-    // verify the new path actually clears the avoid zones reasonably
-    let stillBad = false;
-    for(const seg of newPath){
-      for(const pt of avoidPoints){
-        if(dist(seg,pt) < SAFETY_RADIUS*0.9){ stillBad = true; break; }
-      }
-      if(stillBad) break;
-    }
-    if(stillBad) return false;
-
-    ac.queue = newPath;
-    ac.fullPath = [{x:ac.pos.x,y:ac.pos.y}, ...newPath];
-    ac.distance = pathLength(ac.fullPath);
-    return true;
-  }
-
-  function resolveConflicts(){
-    for(let pass=0; pass<2; pass++){
-      const active = aircraft.filter(a=>a.status!=='landed');
-      const pairs = detectConflicts(active);
-      if(pairs.length===0){
-        // clear stale conflict flags
-        for(const a of active) if(a.status==='conflict_detected') a.status='cruising';
-        continue;
-      }
-      const {clusters, conflictPoints} = clusterConflicts(pairs);
-
-      for(const cluster of clusters){
-        cluster.sort((x,y)=>{
-          const px=priorityScore(x), py=priorityScore(y);
-          if(Math.abs(px-py) < 0.6) return y.id-x.id; // tie -> lower id yields (higher id kept first)
-          return py-px;
-        });
-        const committedPaths = [];
-        cluster.forEach((ac, idx)=>{
-          if(idx===0){
-            ac.status = ac.status==='holding' ? ac.status : 'cruising';
-            committedPaths.push(...(conflictPoints[ac.id]||[]));
-            return;
-          }
-          const avoid = [...(conflictPoints[ac.id]||[]), ...committedPaths];
-          const ok = tryReroute(ac, avoid);
-          if(ok){
-            if(ac.status!=='rerouting'){
-              log('Flight <b style="color:'+ac.color+'">#'+ac.id+'</b> predicted conflict — lower priority, rerouting around Flight #'+cluster[0].id+'.', 'conflict');
-              log('Flight <b style="color:'+ac.color+'">#'+ac.id+'</b> new A* route accepted, '+Math.round(ac.distance)+' NM.', 'reroute');
-              resolvedCount++;
-              document.getElementById('statResolved').textContent = resolvedCount;
+      const adj = nodes.map(() => []);
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          const a = nodeIndex(c, r);
+          for (let dr = -1; dr <= 1; dr++) {
+            for (let dc = -1; dc <= 1; dc++) {
+              if (dr === 0 && dc === 0) continue;
+              const nc = c + dc, nr = r + dr;
+              if (nc < 0 || nc >= COLS || nr < 0 || nr >= ROWS) continue;
+              const b = nodeIndex(nc, nr);
+              const dist = Math.hypot(nodes[a].x - nodes[b].x, nodes[a].y - nodes[b].y);
+              adj[a].push({ to: b, cost: dist });
             }
-            ac.status = 'rerouting';
-            ac.holdTimer = 0;
-            committedPaths.push(...avoid);
-          } else {
-            if(ac.status!=='holding'){
-              log('Flight <b style="color:'+ac.color+'">#'+ac.id+'</b> no safe alternative found — entering holding pattern.', 'holding');
-            }
-            ac.status = 'holding';
-            ac.holdTimer += 1;
-            committedPaths.push(...avoid);
           }
-        });
-      }
-    }
-  }
-
-  /* ============================================================
-     SIMULATION LOOP
-  ============================================================ */
-  let lastTime = performance.now();
-  let tickAccum = 0;
-
-  function step(dtSec){
-    for(const ac of aircraft){
-      if(ac.status==='landed') continue;
-      const speedMul = ac.status==='holding' ? 0.22 : 1;
-      let remaining = ac.speed * simSpeed * speedMul * dtSec;
-      ac.fuel = Math.max(0, ac.fuel - remaining*0.15);
-      while(remaining>0 && ac.queue.length>0){
-        const target = ac.queue[0];
-        const d = dist(ac.pos,target);
-        if(d<=remaining){
-          remaining-=d;
-          ac.pos = {x:target.x,y:target.y};
-          ac.queue.shift();
-        } else {
-          const t = d===0?0:remaining/d;
-          const nx = ac.pos.x+(target.x-ac.pos.x)*t;
-          const ny = ac.pos.y+(target.y-ac.pos.y)*t;
-          ac.heading = Math.atan2(target.y-ac.pos.y, target.x-ac.pos.x);
-          ac.pos = {x:nx,y:ny};
-          remaining=0;
         }
       }
-      if(ac.queue.length===0 && ac.status!=='landed'){
-        ac.status='landed';
-        log('Flight <b style="color:'+ac.color+'">#'+ac.id+'</b> reached destination — landed safely.', 'landed');
+      const borderNodes = nodes.filter(n => n.isBorder);
+
+      function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+
+      function nearestNode(pos) {
+        let best = 0, bd = Infinity;
+        for (const n of nodes) { const d = dist(n, pos); if (d < bd) { bd = d; best = n.idx; } }
+        return best;
       }
-    }
-    aircraft = aircraft.filter(ac => !(ac.status==='landed' && ac._removeAt && performance.now()>ac._removeAt));
-    for(const ac of aircraft){
-      if(ac.status==='landed' && !ac._removeAt) ac._removeAt = performance.now()+4000;
-    }
-  }
 
-  function updateStats(){
-    document.getElementById('statActive').textContent = aircraft.filter(a=>a.status!=='landed').length;
-    document.getElementById('statHolding').textContent = aircraft.filter(a=>a.status==='holding').length;
-    document.getElementById('fleetCount').textContent = aircraft.length + ' aircraft';
-  }
+      /* A* search. penaltyFn(nodeIdx) -> extra cost added when entering that node */
+      function astar(startIdx, goalIdx, penaltyFn) {
+        penaltyFn = penaltyFn || (() => 0);
+        const open = new Set([startIdx]);
+        const cameFrom = {};
+        const g = {}; g[startIdx] = 0;
+        const f = {}; f[startIdx] = dist(nodes[startIdx], nodes[goalIdx]);
+        const closed = new Set();
 
-  /* ============================================================
-     RENDERING
-  ============================================================ */
-  const canvas = document.getElementById('radar');
-  const ctx = canvas.getContext('2d');
-
-  function statusColor(ac){
-    switch(ac.status){
-      case 'conflict_detected': return getCss('--rose');
-      case 'rerouting': return getCss('--amber');
-      case 'holding': return getCss('--violet');
-      case 'landed': return getCss('--green');
-      default: return ac.color;
-    }
-  }
-  function getCss(varName){
-    return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
-  }
-
-  function drawGrid(){
-    ctx.strokeStyle = getCss('--border-soft');
-    ctx.lineWidth = 1;
-    for(const a of adj){}
-    ctx.globalAlpha = 0.5;
-    for(let i=0;i<nodes.length;i++){
-      for(const e of adj[i]){
-        if(e.to<i) continue;
-        ctx.beginPath();
-        ctx.moveTo(nodes[i].x, nodes[i].y);
-        ctx.lineTo(nodes[e.to].x, nodes[e.to].y);
-        ctx.stroke();
+        while (open.size) {
+          let current = null, bestF = Infinity;
+          for (const n of open) { if ((f[n] ?? Infinity) < bestF) { bestF = f[n]; current = n; } }
+          if (current === goalIdx) {
+            const path = [current];
+            while (cameFrom[current] !== undefined) { current = cameFrom[current]; path.push(current); }
+            path.reverse();
+            return path.map(i => ({ x: nodes[i].x, y: nodes[i].y, idx: i }));
+          }
+          open.delete(current); closed.add(current);
+          for (const edge of adj[current]) {
+            if (closed.has(edge.to)) continue;
+            const tentative = g[current] + edge.cost + penaltyFn(edge.to);
+            if (tentative < (g[edge.to] ?? Infinity)) {
+              cameFrom[edge.to] = current;
+              g[edge.to] = tentative;
+              f[edge.to] = tentative + dist(nodes[edge.to], nodes[goalIdx]);
+              open.add(edge.to);
+            }
+          }
+        }
+        return null; // no path found
       }
-    }
-    ctx.globalAlpha = 1;
-    ctx.fillStyle = getCss('--border');
-    for(const n of nodes){
-      ctx.beginPath();
-      ctx.arc(n.x,n.y, n.isBorder?2.2:1.4, 0, Math.PI*2);
-      ctx.fill();
-    }
-  }
 
-  function drawAircraft(ac){
-    const col = statusColor(ac);
+      /* ============================================================
+         STATE
+      ============================================================ */
+      let aircraft = [];
+      let nextId = 1;
+      let running = true;
+      let simSpeed = 1;
+      let resolvedCount = 0;
+      const SAFETY_RADIUS = 34;
+      const LOOKAHEAD_SAMPLES = [0, 2, 4, 6, 8];
+      const PENALTY_RADIUS = 90;
+      const colors = ['#4FD1E8', '#F5A623', '#B18CFF', '#4ADE80', '#FB6B6B', '#7DD3FC', '#FDBA74'];
 
-    // path so far
-    ctx.beginPath();
-    ctx.moveTo(ac.pos.x, ac.pos.y);
-    for(const p of ac.queue) ctx.lineTo(p.x,p.y);
-    ctx.strokeStyle = col;
-    ctx.globalAlpha = 0.35;
-    ctx.setLineDash([4,4]);
-    ctx.lineWidth = 1.3;
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.globalAlpha = 1;
+      function log(msg, cls) {
+        const el = document.getElementById('logList');
+        if (el.querySelector('.log-empty')) el.innerHTML = '';
+        const line = document.createElement('div');
+        line.className = 'log-line' + (cls ? (' ' + cls) : '');
+        const now = new Date();
+        const t = now.toLocaleTimeString([], { hour12: false });
+        line.innerHTML = '<span class="t">' + t + '</span>' + msg;
+        el.prepend(line);
+        while (el.children.length > 60) el.removeChild(el.lastChild);
+      }
 
-    // conflict pulse
-    if(ac.status==='conflict_detected'){
-      const pulse = 14 + 8*Math.sin(performance.now()/180);
-      ctx.beginPath();
-      ctx.arc(ac.pos.x, ac.pos.y, pulse, 0, Math.PI*2);
-      ctx.strokeStyle = col; ctx.globalAlpha=0.6; ctx.lineWidth=1.5;
-      ctx.stroke(); ctx.globalAlpha=1;
-    }
-    if(ac.status==='holding'){
-      const r = 12;
-      ctx.beginPath();
-      ctx.arc(ac.pos.x, ac.pos.y-r, r, 0, Math.PI*2);
-      ctx.strokeStyle = col; ctx.globalAlpha=0.5; ctx.lineWidth=1.2;
-      ctx.stroke(); ctx.globalAlpha=1;
-    }
+      function randRange(a, b) { return a + Math.random() * (b - a); }
 
-    // glow
-    ctx.save();
-    ctx.shadowColor = col;
-    ctx.shadowBlur = 10;
-    ctx.translate(ac.pos.x, ac.pos.y);
-    ctx.rotate(ac.heading);
-    ctx.beginPath();
-    ctx.moveTo(9,0);
-    ctx.lineTo(-6,5);
-    ctx.lineTo(-3,0);
-    ctx.lineTo(-6,-5);
-    ctx.closePath();
-    ctx.fillStyle = col;
-    ctx.fill();
-    ctx.restore();
+      function spawnAircraft() {
+        // pick a border node, then a far-enough border node for destination
+        const startNode = borderNodes[Math.floor(Math.random() * borderNodes.length)];
+        const candidates = borderNodes
+          .filter(n => n.idx !== startNode.idx)
+          .map(n => ({ n, d: dist(n, startNode) }))
+          .sort((a, b) => b.d - a.d)
+          .slice(0, Math.max(4, Math.floor(borderNodes.length * 0.4)));
+        const destNode = candidates[Math.floor(Math.random() * candidates.length)].n;
 
-    // label
-    ctx.font = '10px "IBM Plex Mono", monospace';
-    ctx.fillStyle = getCss('--text-dim');
-    ctx.globalAlpha = 0.9;
-    ctx.fillText('#'+ac.id+'  FL'+Math.round(ac.altitude/100), ac.pos.x+11, ac.pos.y-8);
-    ctx.fillStyle = getCss('--text-faint');
-    ctx.fillText(Math.round(ac.fuel)+'kg', ac.pos.x+11, ac.pos.y+3);
-    ctx.globalAlpha=1;
-  }
+        const path = astar(startNode.idx, destNode.idx);
+        if (!path) return;
 
-  function render(){
-    ctx.clearRect(0,0,LW,LH);
-    ctx.fillStyle = getCss('--bg');
-    ctx.fillRect(0,0,LW,LH);
-    drawGrid();
-    for(const ac of aircraft) drawAircraft(ac);
-  }
-
-  /* ============================================================
-     MAIN LOOP
-  ============================================================ */
-  let conflictCheckAccum = 0;
-  function frame(now){
-    const dt = Math.min(0.05, (now-lastTime)/1000);
-    lastTime = now;
-    if(running){
-      step(dt);
-      conflictCheckAccum += dt;
-      if(conflictCheckAccum > 0.35){
-        conflictCheckAccum = 0;
-        flagPredictedConflicts();
-        resolveConflicts();
-        updateStats();
+        const id = nextId++;
+        const fuel = Math.round(randRange(500, 2000));
+        const ac = {
+          id,
+          color: colors[(id - 1) % colors.length],
+          pos: { x: path[0].x, y: path[0].y },
+          heading: 0,
+          queue: path.slice(1),          // upcoming waypoints
+          fullPath: path.slice(),        // for distance calc / drawing reference
+          startNode: startNode.idx,
+          destNode: destNode.idx,
+          speed: Math.round(randRange(30, 70)),
+          fuel: fuel,
+          fuelMax: fuel,
+          fuelCostWeight: Math.round(randRange(20, 80)),
+          delayCostWeight: Math.round(randRange(20, 80)),
+          priorityWeight: Math.round(randRange(10, 90)),
+          altitude: Math.round(randRange(28, 40)) * 1000,
+          status: 'cruising',
+          holdTimer: 0,
+          distance: pathLength(path),
+          landed: false,
+        };
+        aircraft.push(ac);
+        log('Flight <b style="color:' + ac.color + '">#' + id + '</b> spawned — A* route computed, ' + Math.round(ac.distance) + ' NM.', null);
         renderFleetList();
       }
-    }
-    render();
-    requestAnimationFrame(frame);
-  }
 
-  function flagPredictedConflicts(){
-    const active = aircraft.filter(a=>a.status!=='landed');
-    const pairs = detectConflicts(active);
-    const inConflict = new Set(pairs.flatMap(p=>[p.a.id,p.b.id]));
-    for(const ac of active){
-      if(inConflict.has(ac.id) && ac.status==='cruising'){
-        ac.status = 'conflict_detected';
+      function pathLength(pts) {
+        let d = 0;
+        for (let i = 1; i < pts.length; i++) d += dist(pts[i - 1], pts[i]);
+        return d;
       }
-    }
-  }
 
-  /* ============================================================
-     FLEET LIST / UI
-  ============================================================ */
-  let selectedId = null;
+      function priorityScore(ac) {
+        const fuelUrgency = (1 - ac.fuel / ac.fuelMax) * 60; // less fuel -> more urgent
+        return fuelUrgency + ac.priorityWeight * 0.4;
+      }
 
-  function renderFleetList(){
-    const list = document.getElementById('fleetList');
-    if(aircraft.length===0){
-      list.innerHTML = '<div class="fleet-empty">No aircraft yet — add a flight to begin.</div>';
-      return;
-    }
-    list.innerHTML='';
-    aircraft.slice().sort((a,b)=>a.id-b.id).forEach(ac=>{
-      const card = document.createElement('div');
-      card.className='flight-card';
-      const fuelPct = Math.max(0, Math.round(100*ac.fuel/ac.fuelMax));
-      card.innerHTML = `
+      /* Predict an aircraft's position `tSec` seconds into the future
+         along its current queued path, without mutating state. */
+      function predictPosition(ac, tSec) {
+        let remaining = ac.speed * simSpeed * tSec;
+        let p = { x: ac.pos.x, y: ac.pos.y };
+        for (let i = 0; i < ac.queue.length; i++) {
+          const target = ac.queue[i];
+          const d = dist(p, target);
+          if (d <= remaining) { remaining -= d; p = { x: target.x, y: target.y }; }
+          else {
+            const t = d === 0 ? 0 : remaining / d;
+            p = { x: p.x + (target.x - p.x) * t, y: p.y + (target.y - p.y) * t };
+            return { pos: p, landed: false };
+          }
+        }
+        return { pos: p, landed: true };
+      }
+
+      /* ============================================================
+         CONFLICT DETECTION + RESOLUTION
+      ============================================================ */
+      function detectConflicts(list) {
+        const pairs = [];
+        for (let i = 0; i < list.length; i++) {
+          for (let j = i + 1; j < list.length; j++) {
+            const a = list[i], b = list[j];
+            if (a.status === 'landed' || b.status === 'landed') continue;
+            for (const t of LOOKAHEAD_SAMPLES) {
+              const pa = predictPosition(a, t);
+              const pb = predictPosition(b, t);
+              if (pa.landed || pb.landed) continue;
+              if (dist(pa.pos, pb.pos) < SAFETY_RADIUS) {
+                pairs.push({ a, b, t, point: { x: (pa.pos.x + pb.pos.x) / 2, y: (pa.pos.y + pb.pos.y) / 2 } });
+                break;
+              }
+            }
+          }
+        }
+        return pairs;
+      }
+
+      function clusterConflicts(pairs) {
+        const parent = {};
+        function find(x) { if (parent[x] === undefined) parent[x] = x; if (parent[x] !== x) parent[x] = find(parent[x]); return parent[x]; }
+        function union(x, y) { parent[find(x)] = find(y); }
+        const conflictPoints = {};
+        for (const p of pairs) {
+          union(p.a.id, p.b.id);
+          conflictPoints[p.a.id] = conflictPoints[p.a.id] || [];
+          conflictPoints[p.a.id].push(p.point);
+          conflictPoints[p.b.id] = conflictPoints[p.b.id] || [];
+          conflictPoints[p.b.id].push(p.point);
+        }
+        const groups = {};
+        const ids = new Set(pairs.flatMap(p => [p.a.id, p.b.id]));
+        for (const id of ids) {
+          const root = find(id);
+          groups[root] = groups[root] || [];
+          const ac = aircraft.find(x => x.id === id);
+          groups[root].push(ac);
+        }
+        return { clusters: Object.values(groups), conflictPoints };
+      }
+
+      function tryReroute(ac, avoidPoints) {
+        const startIdx = nearestNode(ac.pos);
+        const penaltyFn = (nodeIdx) => {
+          let penalty = 0;
+          const n = nodes[nodeIdx];
+          for (const pt of avoidPoints) {
+            const d = dist(n, pt);
+            if (d < PENALTY_RADIUS) penalty += (PENALTY_RADIUS - d) * 12;
+          }
+          return penalty;
+        };
+        const newPath = astar(startIdx, ac.destNode, penaltyFn);
+        if (!newPath || newPath.length < 1) return false;
+
+        // verify the new path actually clears the avoid zones reasonably
+        let stillBad = false;
+        for (const seg of newPath) {
+          for (const pt of avoidPoints) {
+            if (dist(seg, pt) < SAFETY_RADIUS * 0.9) { stillBad = true; break; }
+          }
+          if (stillBad) break;
+        }
+        if (stillBad) return false;
+
+        ac.queue = newPath;
+        ac.fullPath = [{ x: ac.pos.x, y: ac.pos.y }, ...newPath];
+        ac.distance = pathLength(ac.fullPath);
+        return true;
+      }
+
+      function resolveConflicts() {
+        for (let pass = 0; pass < 2; pass++) {
+          const active = aircraft.filter(a => a.status !== 'landed');
+          const pairs = detectConflicts(active);
+          if (pairs.length === 0) {
+            // clear stale conflict flags
+            for (const a of active) if (a.status === 'conflict_detected') a.status = 'cruising';
+            continue;
+          }
+          const { clusters, conflictPoints } = clusterConflicts(pairs);
+
+          for (const cluster of clusters) {
+            cluster.sort((x, y) => {
+              const px = priorityScore(x), py = priorityScore(y);
+              if (Math.abs(px - py) < 0.6) return y.id - x.id; // tie -> lower id yields (higher id kept first)
+              return py - px;
+            });
+            const committedPaths = [];
+            cluster.forEach((ac, idx) => {
+              if (idx === 0) {
+                ac.status = ac.status === 'holding' ? ac.status : 'cruising';
+                committedPaths.push(...(conflictPoints[ac.id] || []));
+                return;
+              }
+              const avoid = [...(conflictPoints[ac.id] || []), ...committedPaths];
+              const ok = tryReroute(ac, avoid);
+              if (ok) {
+                if (ac.status !== 'rerouting') {
+                  log('Flight <b style="color:' + ac.color + '">#' + ac.id + '</b> predicted conflict — lower priority, rerouting around Flight #' + cluster[0].id + '.', 'conflict');
+                  log('Flight <b style="color:' + ac.color + '">#' + ac.id + '</b> new A* route accepted, ' + Math.round(ac.distance) + ' NM.', 'reroute');
+                  resolvedCount++;
+                  document.getElementById('statResolved').textContent = resolvedCount;
+                }
+                ac.status = 'rerouting';
+                ac.holdTimer = 0;
+                committedPaths.push(...avoid);
+              } else {
+                if (ac.status !== 'holding') {
+                  log('Flight <b style="color:' + ac.color + '">#' + ac.id + '</b> no safe alternative found — entering holding pattern.', 'holding');
+                }
+                ac.status = 'holding';
+                ac.holdTimer += 1;
+                committedPaths.push(...avoid);
+              }
+            });
+          }
+        }
+      }
+
+      /* ============================================================
+         SIMULATION LOOP
+      ============================================================ */
+      let lastTime = performance.now();
+      let tickAccum = 0;
+
+      function step(dtSec) {
+        for (const ac of aircraft) {
+          if (ac.status === 'landed') continue;
+          const speedMul = ac.status === 'holding' ? 0.22 : 1;
+          let remaining = ac.speed * simSpeed * speedMul * dtSec;
+          ac.fuel = Math.max(0, ac.fuel - remaining * 0.15);
+          while (remaining > 0 && ac.queue.length > 0) {
+            const target = ac.queue[0];
+            const d = dist(ac.pos, target);
+            if (d <= remaining) {
+              remaining -= d;
+              ac.pos = { x: target.x, y: target.y };
+              ac.queue.shift();
+            } else {
+              const t = d === 0 ? 0 : remaining / d;
+              const nx = ac.pos.x + (target.x - ac.pos.x) * t;
+              const ny = ac.pos.y + (target.y - ac.pos.y) * t;
+              ac.heading = Math.atan2(target.y - ac.pos.y, target.x - ac.pos.x);
+              ac.pos = { x: nx, y: ny };
+              remaining = 0;
+            }
+          }
+          if (ac.queue.length === 0 && ac.status !== 'landed') {
+            ac.status = 'landed';
+            log('Flight <b style="color:' + ac.color + '">#' + ac.id + '</b> reached destination — landed safely.', 'landed');
+          }
+        }
+        aircraft = aircraft.filter(ac => !(ac.status === 'landed' && ac._removeAt && performance.now() > ac._removeAt));
+        for (const ac of aircraft) {
+          if (ac.status === 'landed' && !ac._removeAt) ac._removeAt = performance.now() + 4000;
+        }
+      }
+
+      function updateStats() {
+        document.getElementById('statActive').textContent = aircraft.filter(a => a.status !== 'landed').length;
+        document.getElementById('statHolding').textContent = aircraft.filter(a => a.status === 'holding').length;
+        document.getElementById('fleetCount').textContent = aircraft.length + ' aircraft';
+      }
+
+      /* ============================================================
+         RENDERING
+      ============================================================ */
+      const canvas = document.getElementById('radar');
+      const ctx = canvas.getContext('2d');
+
+      function statusColor(ac) {
+        switch (ac.status) {
+          case 'conflict_detected': return getCss('--rose');
+          case 'rerouting': return getCss('--amber');
+          case 'holding': return getCss('--violet');
+          case 'landed': return getCss('--green');
+          default: return ac.color;
+        }
+      }
+      function getCss(varName) {
+        return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+      }
+
+      function drawGrid() {
+        ctx.strokeStyle = getCss('--border-soft');
+        ctx.lineWidth = 1;
+        for (const a of adj) { }
+        ctx.globalAlpha = 0.5;
+        for (let i = 0; i < nodes.length; i++) {
+          for (const e of adj[i]) {
+            if (e.to < i) continue;
+            ctx.beginPath();
+            ctx.moveTo(nodes[i].x, nodes[i].y);
+            ctx.lineTo(nodes[e.to].x, nodes[e.to].y);
+            ctx.stroke();
+          }
+        }
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = getCss('--border');
+        for (const n of nodes) {
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, n.isBorder ? 2.2 : 1.4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      function drawAircraft(ac) {
+        const col = statusColor(ac);
+
+        // path so far
+        ctx.beginPath();
+        ctx.moveTo(ac.pos.x, ac.pos.y);
+        for (const p of ac.queue) ctx.lineTo(p.x, p.y);
+        ctx.strokeStyle = col;
+        ctx.globalAlpha = 0.35;
+        ctx.setLineDash([4, 4]);
+        ctx.lineWidth = 1.3;
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.globalAlpha = 1;
+
+        // conflict pulse
+        if (ac.status === 'conflict_detected') {
+          const pulse = 14 + 8 * Math.sin(performance.now() / 180);
+          ctx.beginPath();
+          ctx.arc(ac.pos.x, ac.pos.y, pulse, 0, Math.PI * 2);
+          ctx.strokeStyle = col; ctx.globalAlpha = 0.6; ctx.lineWidth = 1.5;
+          ctx.stroke(); ctx.globalAlpha = 1;
+        }
+        if (ac.status === 'holding') {
+          const r = 12;
+          ctx.beginPath();
+          ctx.arc(ac.pos.x, ac.pos.y - r, r, 0, Math.PI * 2);
+          ctx.strokeStyle = col; ctx.globalAlpha = 0.5; ctx.lineWidth = 1.2;
+          ctx.stroke(); ctx.globalAlpha = 1;
+        }
+
+        // glow
+        ctx.save();
+        ctx.shadowColor = col;
+        ctx.shadowBlur = 10;
+        ctx.translate(ac.pos.x, ac.pos.y);
+        ctx.rotate(ac.heading);
+        ctx.beginPath();
+        ctx.moveTo(9, 0);
+        ctx.lineTo(-6, 5);
+        ctx.lineTo(-3, 0);
+        ctx.lineTo(-6, -5);
+        ctx.closePath();
+        ctx.fillStyle = col;
+        ctx.fill();
+        ctx.restore();
+
+        // label
+        ctx.font = '10px "IBM Plex Mono", monospace';
+        ctx.fillStyle = getCss('--text-dim');
+        ctx.globalAlpha = 0.9;
+        ctx.fillText('#' + ac.id + '  FL' + Math.round(ac.altitude / 100), ac.pos.x + 11, ac.pos.y - 8);
+        ctx.fillStyle = getCss('--text-faint');
+        ctx.fillText(Math.round(ac.fuel) + 'kg', ac.pos.x + 11, ac.pos.y + 3);
+        ctx.globalAlpha = 1;
+      }
+
+      function render() {
+        ctx.clearRect(0, 0, LW, LH);
+        ctx.fillStyle = getCss('--bg');
+        ctx.fillRect(0, 0, LW, LH);
+        drawGrid();
+        for (const ac of aircraft) drawAircraft(ac);
+      }
+
+      /* ============================================================
+         MAIN LOOP
+      ============================================================ */
+      let conflictCheckAccum = 0;
+      function frame(now) {
+        const dt = Math.min(0.05, (now - lastTime) / 1000);
+        lastTime = now;
+        if (running) {
+          step(dt);
+          conflictCheckAccum += dt;
+          if (conflictCheckAccum > 0.35) {
+            conflictCheckAccum = 0;
+            flagPredictedConflicts();
+            resolveConflicts();
+            updateStats();
+            renderFleetList();
+          }
+        }
+        render();
+        requestAnimationFrame(frame);
+      }
+
+      function flagPredictedConflicts() {
+        const active = aircraft.filter(a => a.status !== 'landed');
+        const pairs = detectConflicts(active);
+        const inConflict = new Set(pairs.flatMap(p => [p.a.id, p.b.id]));
+        for (const ac of active) {
+          if (inConflict.has(ac.id) && ac.status === 'cruising') {
+            ac.status = 'conflict_detected';
+          }
+        }
+      }
+
+      /* ============================================================
+         FLEET LIST / UI
+      ============================================================ */
+      let selectedId = null;
+
+      function renderFleetList() {
+        const list = document.getElementById('fleetList');
+        if (aircraft.length === 0) {
+          list.innerHTML = '<div class="fleet-empty">No aircraft yet — add a flight to begin.</div>';
+          return;
+        }
+        list.innerHTML = '';
+        aircraft.slice().sort((a, b) => a.id - b.id).forEach(ac => {
+          const card = document.createElement('div');
+          card.className = 'flight-card';
+          const fuelPct = Math.max(0, Math.round(100 * ac.fuel / ac.fuelMax));
+          card.innerHTML = `
         <div class="row1">
           <span class="fid" style="color:${ac.color}">FLIGHT #${ac.id}</span>
-          <span class="badge ${ac.status}">${ac.status.replace('_',' ')}</span>
+          <span class="badge ${ac.status}">${ac.status.replace('_', ' ')}</span>
         </div>
         <div class="meta">
           <span>SPD ${ac.speed}</span>
-          <span>FL${Math.round(ac.altitude/100)}</span>
+          <span>FL${Math.round(ac.altitude / 100)}</span>
           <span>${Math.round(ac.distance)} NM</span>
         </div>
-        <div class="fuelbar"><i style="width:${fuelPct}%; background:${fuelPct<25?'var(--rose)':'var(--green)'}"></i></div>
+        <div class="fuelbar"><i style="width:${fuelPct}%; background:${fuelPct < 25 ? 'var(--rose)' : 'var(--green)'}"></i></div>
       `;
-      card.addEventListener('click', ()=>openDrawer(ac.id));
-      list.appendChild(card);
-    });
-  }
+          card.addEventListener('click', () => openDrawer(ac.id));
+          list.appendChild(card);
+        });
+      }
 
-  /* ============================================================
-     CONFIG DRAWER
-  ============================================================ */
-  const drawer = document.getElementById('drawer');
-  const backdrop = document.getElementById('drawerBackdrop');
+      /* ============================================================
+         CONFIG DRAWER
+      ============================================================ */
+      const drawer = document.getElementById('drawer');
+      const backdrop = document.getElementById('drawerBackdrop');
 
-  function openDrawer(id){
-    selectedId = id;
-    const ac = aircraft.find(a=>a.id===id);
-    if(!ac) return;
-    document.getElementById('drawerTitle').textContent = 'FLIGHT #'+id;
-    document.getElementById('cfgStatusText').textContent = ac.status.replace('_',' ');
-    const b = document.getElementById('cfgStatusBadge');
-    b.className='badge '+ac.status; b.textContent=ac.status.replace('_',' ');
-    document.getElementById('cfgDistance').textContent = Math.round(ac.distance)+' NM';
-    document.getElementById('cfgFuel').value = ac.fuel;
-    document.getElementById('cfgFuel').max = ac.fuelMax;
-    document.getElementById('cfgFuelVal').textContent = Math.round(ac.fuel)+' kg';
-    document.getElementById('cfgSpeed').value = ac.speed;
-    document.getElementById('cfgSpeedVal').textContent = ac.speed+' kt';
-    document.getElementById('cfgPriority').value = ac.priorityWeight;
-    document.getElementById('cfgPriorityVal').textContent = ac.priorityWeight;
-    document.getElementById('cfgFuelW').value = ac.fuelCostWeight;
-    document.getElementById('cfgFuelWVal').textContent = ac.fuelCostWeight;
-    document.getElementById('cfgDelayW').value = ac.delayCostWeight;
-    document.getElementById('cfgDelayWVal').textContent = ac.delayCostWeight;
-    document.getElementById('cfgPriorityScore').textContent = priorityScore(ac).toFixed(1);
-    drawer.classList.add('open'); backdrop.classList.add('open');
-  }
-  function closeDrawer(){
-    drawer.classList.remove('open'); backdrop.classList.remove('open');
-    selectedId=null;
-  }
-  document.getElementById('drawerClose').addEventListener('click', closeDrawer);
-  backdrop.addEventListener('click', closeDrawer);
+      function openDrawer(id) {
+        selectedId = id;
+        const ac = aircraft.find(a => a.id === id);
+        if (!ac) return;
+        document.getElementById('drawerTitle').textContent = 'FLIGHT #' + id;
+        document.getElementById('cfgStatusText').textContent = ac.status.replace('_', ' ');
+        const b = document.getElementById('cfgStatusBadge');
+        b.className = 'badge ' + ac.status; b.textContent = ac.status.replace('_', ' ');
+        document.getElementById('cfgDistance').textContent = Math.round(ac.distance) + ' NM';
+        document.getElementById('cfgFuel').value = ac.fuel;
+        document.getElementById('cfgFuel').max = ac.fuelMax;
+        document.getElementById('cfgFuelVal').textContent = Math.round(ac.fuel) + ' kg';
+        document.getElementById('cfgSpeed').value = ac.speed;
+        document.getElementById('cfgSpeedVal').textContent = ac.speed + ' kt';
+        document.getElementById('cfgPriority').value = ac.priorityWeight;
+        document.getElementById('cfgPriorityVal').textContent = ac.priorityWeight;
+        document.getElementById('cfgFuelW').value = ac.fuelCostWeight;
+        document.getElementById('cfgFuelWVal').textContent = ac.fuelCostWeight;
+        document.getElementById('cfgDelayW').value = ac.delayCostWeight;
+        document.getElementById('cfgDelayWVal').textContent = ac.delayCostWeight;
+        document.getElementById('cfgPriorityScore').textContent = priorityScore(ac).toFixed(1);
+        drawer.classList.add('open'); backdrop.classList.add('open');
+      }
+      function closeDrawer() {
+        drawer.classList.remove('open'); backdrop.classList.remove('open');
+        selectedId = null;
+      }
+      document.getElementById('drawerClose').addEventListener('click', closeDrawer);
+      backdrop.addEventListener('click', closeDrawer);
 
-  function bindSlider(id, prop, suffix, onChange){
-    document.getElementById(id).addEventListener('input', (e)=>{
-      const ac = aircraft.find(a=>a.id===selectedId);
-      if(!ac) return;
-      const v = Number(e.target.value);
-      ac[prop] = v;
-      document.getElementById(id+'Val').textContent = v + (suffix||'');
-      document.getElementById('cfgPriorityScore').textContent = priorityScore(ac).toFixed(1);
-      if(onChange) onChange(ac,v);
-    });
-  }
-  bindSlider('cfgFuel','fuel',' kg');
-  bindSlider('cfgSpeed','speed',' kt');
-  bindSlider('cfgPriority','priorityWeight','');
-  bindSlider('cfgFuelW','fuelCostWeight','');
-  bindSlider('cfgDelayW','delayCostWeight','');
+      function bindSlider(id, prop, suffix, onChange) {
+        document.getElementById(id).addEventListener('input', (e) => {
+          const ac = aircraft.find(a => a.id === selectedId);
+          if (!ac) return;
+          const v = Number(e.target.value);
+          ac[prop] = v;
+          document.getElementById(id + 'Val').textContent = v + (suffix || '');
+          document.getElementById('cfgPriorityScore').textContent = priorityScore(ac).toFixed(1);
+          if (onChange) onChange(ac, v);
+        });
+      }
+      bindSlider('cfgFuel', 'fuel', ' kg');
+      bindSlider('cfgSpeed', 'speed', ' kt');
+      bindSlider('cfgPriority', 'priorityWeight', '');
+      bindSlider('cfgFuelW', 'fuelCostWeight', '');
+      bindSlider('cfgDelayW', 'delayCostWeight', '');
 
-  document.getElementById('cfgRemove').addEventListener('click', ()=>{
-    aircraft = aircraft.filter(a=>a.id!==selectedId);
-    closeDrawer();
-    renderFleetList();
-    updateStats();
-  });
+      document.getElementById('cfgRemove').addEventListener('click', () => {
+        aircraft = aircraft.filter(a => a.id !== selectedId);
+        closeDrawer();
+        renderFleetList();
+        updateStats();
+      });
 
-  // click on canvas selects nearest aircraft
-  canvas.addEventListener('click', (e)=>{
-    const rect = canvas.getBoundingClientRect();
-    const x = (e.clientX-rect.left) / rect.width * LW;
-    const y = (e.clientY-rect.top) / rect.height * LH;
-    let best=null, bd=Infinity;
-    for(const ac of aircraft){
-      const d = Math.hypot(ac.pos.x-x, ac.pos.y-y);
-      if(d<bd){bd=d;best=ac;}
-    }
-    if(best && bd<40) openDrawer(best.id);
-  });
+      // click on canvas selects nearest aircraft
+      canvas.addEventListener('click', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const x = (e.clientX - rect.left) / rect.width * LW;
+        const y = (e.clientY - rect.top) / rect.height * LH;
+        let best = null, bd = Infinity;
+        for (const ac of aircraft) {
+          const d = Math.hypot(ac.pos.x - x, ac.pos.y - y);
+          if (d < bd) { bd = d; best = ac; }
+        }
+        if (best && bd < 40) openDrawer(best.id);
+      });
 
-  /* ============================================================
-     TOOLBAR
-  ============================================================ */
-  document.getElementById('addFlightBtn').addEventListener('click', spawnAircraft);
+      /* ============================================================
+         TOOLBAR
+      ============================================================ */
+      document.getElementById('addFlightBtn').addEventListener('click', spawnAircraft);
 
-  const playBtn = document.getElementById('playPauseBtn');
-  playBtn.addEventListener('click', ()=>{
-    running = !running;
-    playBtn.textContent = running ? '⏸ Pause' : '▶ Play';
-    playBtn.classList.toggle('active', running);
-    lastTime = performance.now();
-  });
+      const playBtn = document.getElementById('playPauseBtn');
+      playBtn.addEventListener('click', () => {
+        running = !running;
+        playBtn.textContent = running ? '⏸ Pause' : '▶ Play';
+        playBtn.classList.toggle('active', running);
+        lastTime = performance.now();
+      });
 
-  document.querySelectorAll('[data-speed]').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      simSpeed = Number(btn.dataset.speed);
-      document.querySelectorAll('[data-speed]').forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
-    });
-  });
+      document.querySelectorAll('[data-speed]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          simSpeed = Number(btn.dataset.speed);
+          document.querySelectorAll('[data-speed]').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+        });
+      });
 
-  const panelToggle = document.getElementById('togglePanelBtn');
-  panelToggle.addEventListener('click', ()=>{
-    const grid = document.getElementById('simGrid');
-    const hidden = grid.classList.toggle('panel-hidden');
-    document.getElementById('sideCol').style.display = hidden ? 'none':'flex';
-    panelToggle.textContent = hidden ? 'Show panel' : 'Hide panel';
-  });
+      const panelToggle = document.getElementById('togglePanelBtn');
+      panelToggle.addEventListener('click', () => {
+        const grid = document.getElementById('simGrid');
+        const hidden = grid.classList.toggle('panel-hidden');
+        document.getElementById('sideCol').style.display = hidden ? 'none' : 'flex';
+        panelToggle.textContent = hidden ? 'Show panel' : 'Hide panel';
+      });
 
-  document.getElementById('resetBtn').addEventListener('click', ()=>{
-    aircraft = [];
-    resolvedCount = 0;
-    document.getElementById('statResolved').textContent = 0;
-    document.getElementById('logList').innerHTML = '<div class="log-empty">Waiting for activity…</div>';
-    renderFleetList();
-    updateStats();
-    closeDrawer();
-  });
+      document.getElementById('resetBtn').addEventListener('click', () => {
+        aircraft = [];
+        resolvedCount = 0;
+        document.getElementById('statResolved').textContent = 0;
+        document.getElementById('logList').innerHTML = '<div class="log-empty">Waiting for activity…</div>';
+        renderFleetList();
+        updateStats();
+        closeDrawer();
+      });
 
-  /* ============================================================
-     INIT
-  ============================================================ */
-  for(let i=0;i<4;i++) spawnAircraft();
-  updateStats();
-  requestAnimationFrame(frame);
+      /* ============================================================
+         INIT
+      ============================================================ */
+      for (let i = 0; i < 4; i++) spawnAircraft();
+      updateStats();
+      requestAnimationFrame(frame);
 
-})();
-</script>
+    })();
+  </script>
 </body>
+
 </html>
