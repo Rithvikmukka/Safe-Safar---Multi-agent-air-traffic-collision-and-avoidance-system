@@ -88,24 +88,6 @@ $$\text{Cost} = (\text{CollisionRisk} \times \lambda_{\text{penalty}}) + w_d \cd
 - **Case D (Deterministic Priority Tie-Breaking):** If two conflicting aircraft possess identical priority scores, the conflict is deterministically broken by aircraft ID (lower ID yields), eliminating deadlock.
 - **Case E (Cascading Conflict Prevention):** A rerouted aircraft immediately runs forward conflict checks against all other airspace traffic before committing, looping until the airspace state stabilizes.
 
----
-
-## 🎤 Presentation & Viva Q&A (Full-Mark Answers)
-
-### Q1. Why is this a Multi-Agent System?
-> **Answer:** Each aircraft is modeled as an autonomous intelligent agent with its own goals, perception, local planning, and decision-making capabilities. Agents operate in a shared environment where their actions directly affect the decisions of other aircraft.
-
-### Q2. Why not use one central controller?
-> **Answer:** A centralized controller forms a single-agent bottleneck vulnerable to human fatigue, system outages, and communication delay. Distributing decision-making among individual aircraft agents allows rapid, parallel conflict detection and local dynamic replanning.
-
-### Q3. Why use $A^*$ Search?
-> **Answer:** $A^*$ finds the mathematically lowest-cost path using an admissible straight-line heuristic $h(n)$. Unlike uninformed Dijkstra, it focuses search toward the destination, and easily integrates dynamic penalty fields for hazard avoidance.
-
-### Q4. Why does dynamic rerouting reduce fuel consumption?
-> **Answer:** The objective function finds the least-cost safe path. Rather than executing crude, oversized detours or stopping aircraft, $A^*$ calculates minimal-deviation waypoint bypasses that minimize additional distance and fuel burn.
-
-### Q5. What happens when two aircraft want the same route?
-> **Answer:** A conflict resolution mechanism evaluates predicted collision risk and priority scores. The yielding aircraft dynamically recalculates an $A^*$ bypass or alters flight level until safe separation ($>36\,\text{NM}$) is restored.
 
 ---
 
