@@ -2,7 +2,8 @@
 
 **Foundations of Artificial Intelligence (FOAI) Case Study Project**
 
-[![Simulation](https://img.shields.io/badge/Simulation-Live%20Radar%20ATC-amber)](./safe%20safar.html)
+[![Simulation](https://img.shields.io/badge/Simulation%20v1-Original%20Radar%20ATC-amber)](./safe%20safar.html)
+[![Simulation v2](https://img.shields.io/badge/Simulation%20v2-Airliner%20Visuals%20%26%20Multi--Agent%20Holding-cyan)](./safe%20safar%20v2.html)
 [![AI Architecture](https://img.shields.io/badge/Architecture-Decentralized%20Multi--Agent-cyan)](./README.md)
 [![Pathfinding](https://img.shields.io/badge/Algorithm-A*%20Informed%20Search-green)](./README.md)
 
@@ -80,10 +81,12 @@ $$\text{Cost} = (\text{CollisionRisk} \times \lambda_{\text{penalty}}) + w_d \cd
    ```bash
    git clone https://github.com/Rithvikmukka/Safe-Safar---Multi-agent-air-traffic-collision-and-avoidance-system.git
    ```
-2. Double-click or open [`safe safar.html`](./safe%20safar.html) directly in any modern browser (Chrome, Edge, Firefox, Safari).
-3. **Interactive Demo Buttons:**
-   - `+ Add Flight`: Spawns autonomous aircraft with randomized routes, speeds, and flight levels.
-   - `⚡ Trigger Head-On (Case A)`: Spawns 2 aircraft on a direct collision course to demonstrate instantaneous $A^*$ avoidance.
-   - `⚡ Trigger 3-Way Congestion (Case B)`: Spawns 3 converging aircraft to demonstrate priority sorting and multi-agent cascading resolution.
+2. Double-click or open [`safe safar v2.html`](./safe%20safar%20v2.html) (Version 2 with commercial airliner silhouettes, math formulation section, and natural Case C holding pattern) or [`safe safar.html`](./safe%20safar.html) directly in any modern browser (Chrome, Edge, Firefox, Safari).
+3. **Interactive Demo Scenarios:**
+   - `Case A: Head-On Conflict`: 2 reciprocal aircraft; higher-priority maintains while lower-priority computes an A* detour.
+   - `Case B: 3-Way Congestion`: 3 converging flights sort by priority score to clear a bottleneck fix.
+   - `Case C: Holding Pattern`: Priority crossing convoy blocks central corridor exits; arriving flight autonomously enters a 210kt holding orbit over its waypoint fix until cleared.
+   - `Case D: Deterministic Tie-Break`: Symmetric priorities broken deterministically by agent ID.
+   - `+ Add Custom Flight`: Spawns autonomous aircraft with randomized routes and flight levels.
    - `0.5× / 1× / 2× / 4×`: Simulation speed multiplier.
    - Click any aircraft on the radar to open the real-time **Telemetry & Parameters Drawer**.
