@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Safe Safar — A decentralized multi-agent air traffic collision avoidance and dynamic rerouting system built for the Foundations of AI (FOAI) case study.">
+  <title>Safe Safar v2 — Decentralized Multi-Agent Air Traffic Collision Avoidance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="src/css/simulation.css">
+</head>
+
+<body>
+
+  <!-- ================= TOP NAVIGATION ================= -->
+  <div class="topbar">
+    <div class="brand">
+      <span class="dot"></span>
+      <span>SAFE SAFAR v2</span>
+      <span class="agent-pill">Decentralized Multi-Agent</span>
+    </div>
+    <div class="topnav">
+      <a href="#brief">Case Study</a>
+      <a href="#algorithm">A* &amp; PEAS</a>
+      <a href="#parameters">Parameters &amp; Formulas</a>
+      <a href="#simulation">Simulation</a>
+      <button class="topnav-cta" id="launchFsTopNavBtn">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+        Tactical Console
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= CASE STUDY ARTICLE ================= -->
+  <div class="wrap">
+    <div class="hero" id="brief">
+      <div class="kicker">
+        <span>● FOAI CASE STUDY</span>
+        <span>·</span>
+        <span>MULTI-AGENT SYSTEMS</span>
+        <span>·</span>
+        <span>A* DYNAMIC REPLANNING</span>
+      </div>
+      <h1>Every aircraft flies itself <br><span class="gradient">out of danger.</span></h1>
+      <p class="lead">
+        A decentralized multi-agent simulation where each aircraft is an intelligent, autonomous agent — sensing nearby traffic within its perception horizon, negotiating peer-to-peer (P2P), and replanning optimal routes with A* informed search without a centralized ground controller.
+      </p>
+      <div class="hero-actions">
+        <button class="btn primary" id="launchFsHeroBtn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7" /></svg>
+          Launch Simulation
+        </button>
+        <a href="safe safar.html" class="btn amber">View v1 (Radar ATC)</a>
+        <a href="https://github.com/Rithvikmukka/Safe-Safar---Multi-agent-air-traffic-collision-and-avoidance-system" class="btn" target="_blank" rel="noopener">GitHub Repository</a>
+      </div>
+    </div>
+
+    <section class="article" id="algorithm">
+
+      <h2><span class="num">01</span> The Problem &amp; Motivation</h2>
+      <p>
+        Modern airspace supports over <strong>105,000 daily commercial flights</strong>, with up to 20,000 aircraft airborne simultaneously. Centralized human controllers face acute cognitive saturation — contributing to the <strong>1,757 FAA near-miss incidents recorded in 2024 alone</strong>. A root-cause study of 85 incidents identified three dominant failure modes: improper aircraft spacing (30.5%), failure to intervene in time (28.4%), and improper control handoffs (27.8%).
+      </p>
+      <p>
+        Safe Safar resolves this bottleneck by distributing intelligence to each aircraft. Instead of one controller managing thousands of planes, each aircraft autonomously perceives, negotiates, and reroutes without central coordination — a truly decentralized multi-agent system.
+      </p>
+
+      <h2><span class="num">02</span> AI Agent Formalization — PEAS Framework</h2>
+      <table class="peas">
+        <tr>
+          <th>Performance</th>
+          <td>Zero mid-air collisions (absolute constraint). Enforce minimum safe separation (&gt;34 NM / vertical ΔFL ≥ 20). Minimize fuel burn, detour distance, and arrival delay. Reach assigned destination gate safely.</td>
+        </tr>
+        <tr>
+          <th>Environment</th>
+          <td>Dynamic continuous 2D/flight-level airspace graph with aeronautical waypoint fixes (KODEX, ELKEY, etc.), variable traffic density, and active flight paths.</td>
+        </tr>
+        <tr>
+          <th>Actuators</th>
+          <td>Waypoint heading vector changes · Cruise speed throttling (35–65 kts) · Flight level / altitude adjustment · Dynamic A* route replanning · Aeronautical holding pattern loiter orbits</td>
+        </tr>
+        <tr>
+          <th>Sensors</th>
+          <td><strong>Internal Telemetry:</strong> GPS position, velocity, remaining fuel, destination. <br><strong>Forward Radar Transponder:</strong> 72° forward cone, 165 NM range — perceives peer positions, speeds, headings, and flight levels. <strong>Omnidirectional Transponder Bubble:</strong> 51 NM proximity alert for blind-spot overtake scenarios.</td>
+        </tr>
+      </table>
+
+      <h2><span class="num">03</span> Environment Classification</h2>
+      <div class="prop-grid">
+        <div class="prop-card"><div class="name">Multi-Agent (Mixed-Motive)</div><div class="desc">Multiple planes act concurrently. All cooperate to avoid collisions, but compete selfishly for the most fuel-efficient route.</div></div>
+        <div class="prop-card"><div class="name">Partially Observable</div><div class="desc">Agents perceive only what enters their forward radar cone — no omniscient global map. Simulates realistic limited-range avionics.</div></div>
+        <div class="prop-card"><div class="name">Dynamic</div><div class="desc">The state changes continuously while agents compute their next moves. A reroute by one agent immediately alters the conflict landscape for others.</div></div>
+        <div class="prop-card"><div class="name">Continuous</div><div class="desc">Positions, velocities, headings, and fuel burn rates exist in continuous real-number space — not a discrete grid.</div></div>
+        <div class="prop-card"><div class="name">Sequential</div><div class="desc">An avoidance maneuver now directly affects future encounters downstream. Decisions are interdependent across time.</div></div>
+        <div class="prop-card"><div class="name">Stochastic</div><div class="desc">Traffic generation rates, speed fluctuations, and turn delays introduce non-deterministic variance in the environment.</div></div>
+      </div>
+
+      <h2><span class="num">04</span> Agent Decision Cycle</h2>
+      <div class="loop">
+        <span class="step active-step">👁 Sense</span>
+        <span class="arrow">→</span>
+        <span class="step">📡 Detect Conflict</span>
+        <span class="arrow">→</span>
+        <span class="step">🤝 P2P Negotiate</span>
+        <span class="arrow">→</span>
+        <span class="step active-step">🧭 A* Replan</span>
+        <span class="arrow">→</span>
+        <span class="step">✈ Act</span>
+        <span class="arrow">→</span>
+        <span class="step active-step">🔁 Re-observe</span>
+      </div>
+      <p>
+        Agents do not wait for a collision — they use <strong>forward temporal projection</strong> over discrete lookahead samples (t = 2s, 4s, 6s, 8s). If predicted positions breach the 34 NM safety radius at any future timestamp, a <strong>Hazard Point</strong> is flagged at that coordinate.
+      </p>
+
+      <h2><span class="num">05</span> Objective Cost Function</h2>
+      <div class="formula">
+        <span class="k">Cost</span> = (CollisionRisk × LargePenalty) + w<sub>d</sub>·Distance + w<sub>f</sub>·Fuel + w<sub>t</sub>·Delay
+        <small>The collision penalty term strictly dominates all others — guaranteeing that no rational agent ever selects a risky shortcut for fuel or schedule savings.</small>
+      </div>
+
+      <h2><span class="num">06</span> Conflict Resolution Scenarios</h2>
+      <div class="case-list">
+        <div class="case">
+          <span class="letter">A</span>
+          <div class="body">
+            <b>Pairwise Head-On Conflict</b>
+            <span>Two aircraft detect mutual approach via overlapping radar cones. P2P negotiation fires. Higher-priority agent holds course; lower-priority agent executes local A* detour around the hazard point cluster.</span>
+          </div>
+        </div>
+        <div class="case">
+          <span class="letter">B</span>
+          <div class="body">
+            <b>3-Way Convergence (Cluster Conflict)</b>
+            <span>Three or more agents converge on the same waypoint. Union-Find clustering groups them by shared conflict graph component. Agents are sorted by priority and rerouted sequentially — highest first, lowest waits.</span>
+          </div>
+        </div>
+        <div class="case">
+          <span class="letter">C</span>
+          <div class="body">
+            <b>All Exits Blocked → Aeronautical Holding Pattern</b>
+            <span>If every detour A* proposes violates the hard geometric safety gate, the agent anchors over the nearest waypoint fix and enters a safe loiter orbit until crossing traffic clears.</span>
+          </div>
+        </div>
+        <div class="case">
+          <span class="letter">D</span>
+          <div class="body">
+            <b>Deterministic Tie-Breaking</b>
+            <span>If two agents share exactly the same priority score, their unique aircraft IDs serve as a final deterministic tiebreaker — eliminating all possibility of logical deadlock.</span>
+          </div>
+        </div>
+        <div class="case">
+          <span class="letter">E</span>
+          <div class="body">
+            <b>Fuel Starvation Priority Override</b>
+            <span>A plane with critically low fuel receives a boosted fuel-urgency priority score that overrides any mission-type advantage — safety beats VIP status, always.</span>
+          </div>
+        </div>
+      </div>
+
+    </section>
+  </div>
+
+  <!-- ================= PARAMETERS & FORMULAS ================= -->
+  <div style="background: var(--bg-panel); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 40px 0;" id="parameters">
+    <div class="wrap">
+      <h2 style="font-size:25px; font-weight:700; margin: 0 0 6px; letter-spacing:-.01em;">Decision Parameters &amp; Formulas</h2>
+      <p style="color:var(--text-dim); font-size:14px; margin:0 0 28px;">All constants are calibrated to balance computational tractability with realistic aeronautical separations.</p>
+
+      <table class="param-matrix">
+        <thead>
+          <tr>
+            <th>Parameter</th>
+            <th>Symbol</th>
+            <th>Value</th>
+            <th>Role &amp; Rationale</th>
+            <th>Category</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Minimum Safe Separation</td>
+            <td><span class="param-sym">SAFETY_RADIUS</span></td>
+            <td>34 NM</td>
+            <td>ICAO-standard minimum radar separation for en-route cruising flight. Collision declared if breached.</td>
+            <td><span class="param-cat internal">Internal</span></td>
+          </tr>
+          <tr>
+            <td>Radar Sensor Horizon</td>
+            <td><span class="param-sym">SENSOR_HORIZON</span></td>
+            <td>165 NM</td>
+            <td>Forward cone detection range. At 450 kts closure, 165 NM provides ~11 min of advance warning for head-on scenarios.</td>
+            <td><span class="param-cat sensing">Sensing</span></td>
+          </tr>
+          <tr>
+            <td>Radar Field-of-View</td>
+            <td><span class="param-sym">FOV_HALF</span></td>
+            <td>72° total</td>
+            <td>Realistic nose-cone radar beam. Aircraft outside this cone remain undetected until they enter the proximity bubble.</td>
+            <td><span class="param-cat sensing">Sensing</span></td>
+          </tr>
+          <tr>
+            <td>Avoidance Penalty Radius</td>
+            <td><span class="param-sym">PENALTY_RADIUS</span></td>
+            <td>95 NM</td>
+            <td>Radius of A* artificial potential field around each hazard point. Wider than SAFETY_RADIUS to force a generous arc detour.</td>
+            <td><span class="param-cat cost">Cost</span></td>
+          </tr>
+          <tr>
+            <td>Repulsion Multiplier</td>
+            <td><span class="param-sym">×14</span></td>
+            <td>14 units/NM</td>
+            <td>Scales penetration depth into graph cost. A node 90 NM from hazard center incurs +1,260 penalty — making the straight-through path astronomically expensive to A*.</td>
+            <td><span class="param-cat cost">Cost</span></td>
+          </tr>
+          <tr>
+            <td>Max Rational Detour</td>
+            <td><span class="param-sym">MAX_DETOUR</span></td>
+            <td>35 NM</td>
+            <td>Balances route extension fuel penalty against holding delay in the local A* replanning utility cost.</td>
+            <td><span class="param-cat cost">Cost</span></td>
+          </tr>
+          <tr>
+            <td>Dominant Collision Penalty</td>
+            <td><span class="param-sym">λ<sub>penalty</sub></span></td>
+            <td>8,000 penalty units</td>
+            <td>Applies an inverse-square penalty field to graph fixes near active conflict hotspots, bending A* paths away from dangerous corridors.</td>
+            <td><span class="param-cat cost">Cost</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="formula-card-grid">
+        <div class="formula-card">
+          <div class="f-tag">Formula 01 · Priority Score</div>
+          <h3 class="f-title">Agent Priority Scoring</h3>
+          <div class="f-math">P = U<sub>fuel</sub> + 0.4 · w<sub>p</sub></div>
+          <p class="f-desc">Fuel Urgency U<sub>fuel</sub> scales up to 60 pts; mission importance w<sub>p</sub> scales to 40 pts. A critically low-fuel commercial flight always outranks a fully fueled VIP aircraft — safety beats status.</p>
+          <ul>
+            <li>U<sub>fuel</sub> = max(0, 60 · (1 − fuel / max_fuel))</li>
+            <li>w<sub>p</sub> ∈ [0, 100] assigned per flight type</li>
+          </ul>
+        </div>
+        <div class="formula-card">
+          <div class="f-tag">Formula 02 · A* Avoidance Penalty</div>
+          <h3 class="f-title">Repulsive Potential Field</h3>
+          <div class="f-math">Penalty(n) = (PenaltyRadius − d(n, hazard)) × 14</div>
+          <p class="f-desc">Applied only when d &lt; 95 NM. Creates a mathematical "hill" forcing A* to route around the hazard perimeter. The closer a candidate waypoint is to the epicenter, the steeper the artificial cost cliff.</p>
+          <ul>
+            <li>At d = 90 NM → +70 units penalty</li>
+            <li>At d = 50 NM → +630 units penalty</li>
+            <li>At d = 5 NM → +1,260 units penalty</li>
+          </ul>
+        </div>
+        <div class="formula-card">
+          <div class="f-tag">Formula 03 · A* Cost Function</div>
+          <h3 class="f-title">Informed Search with Euclidean Heuristic</h3>
+          <div class="f-math">f(n) = g(n) + Penalty(n) + h(n)<br><br>h(n) = dist(n, goal)</div>
+          <p class="f-desc">Euclidean straight-line distance is an admissible and consistent heuristic (h(n) ≤ h*(n)), guaranteeing optimal path length. Penalty(n) is an inadmissible additive term that trades strict optimality for guaranteed safety separation.</p>
+        </div>
+        <div class="formula-card">
+          <div class="f-tag">Formula 04 · Objective Cost</div>
+          <h3 class="f-title">Multi-Objective Agent Utility</h3>
+          <div class="f-math">Cost = (CollisionRisk × λ<sub>penalty</sub>) + w<sub>d</sub>·Distance + w<sub>f</sub>·Fuel + w<sub>t</sub>·Delay</div>
+          <p class="f-desc">The collision penalty term strictly dominates all others — guaranteeing 100% safety separation as the highest objective.</p>
+        </div>
+        <div class="formula-card">
+          <div class="f-tag">Formula 05 · Temporal Projection</div>
+          <h3 class="f-title">4D Lookahead Conflict Detection</h3>
+          <div class="f-math">∀ t ∈ {2s, 4s, 6s, 8s}:<br>dist(P<sub>A</sub>(t), P<sub>B</sub>(t)) &lt; 34 NM ⟹ CONFLICT</div>
+          <p class="f-desc">Agents compute their predicted positions at 5 discrete future timestamps. Each timestamp where two planes will be too close generates one hazard point. A* then routes around the entire hazard cluster.</p>
+        </div>
+        <div class="formula-card">
+          <div class="f-tag">Formula 06 · Separation Invariant</div>
+          <h3 class="f-title">Hard Safety Geometric Gate</h3>
+          <div class="f-math">∀ seg ∈ newPath, ∀ pt ∈ hazards:<br>dist(seg, pt) &lt; SAFETY_RADIUS × 0.92 ⟹ REJECT</div>
+          <p class="f-desc">After A* proposes a detour, every waypoint is checked against every hazard point. A single violation causes the entire proposed route to be rejected — triggering a holding pattern fallback.</p>
+        </div>
+      </div>
+
+      <!-- Architecture Comparison Table -->
+      <h2 style="font-size:25px; font-weight:700; margin: 40px 0 12px; letter-spacing:-.01em;">Architecture Comparison</h2>
+      <table class="param-matrix">
+        <thead>
+          <tr>
+            <th>Criterion</th>
+            <th>Centralized ATC</th>
+            <th>Safe Safar (Decentralized Multi-Agent)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Early Conflict Detection</td>
+            <td>Global visibility hours ahead — high false positive rate due to weather/trajectory drift</td>
+            <td>Local-horizon ground truth (10–15 min), high-confidence tactical detection</td>
+          </tr>
+          <tr>
+            <td>Computational Complexity</td>
+            <td>NP-Hard combinatorial global optimization (O(N!) for N flights)</td>
+            <td>Linear O(N) local computation per conflict cluster</td>
+          </tr>
+          <tr>
+            <td>Resilience / SPOF</td>
+            <td>Single ground-server failure blacks out entire airspace sector</td>
+            <td>Zero SPOF — each agent operates autonomously on board</td>
+          </tr>
+          <tr>
+            <td>Coverage</td>
+            <td>Requires continuous ground radar and datalink infrastructure</td>
+            <td>Peer-to-peer ADS-B works over oceans, mountains, remote regions</td>
+          </tr>
+          <tr>
+            <td>Best Application</td>
+            <td>Strategic slot allocation, macro corridor planning, airport sequencing</td>
+            <td>Tactical real-time deconfliction, UAM drone swarms, oceanic airspace</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div style="margin-top:24px; padding:16px 20px; background: rgba(79,209,232,0.07); border:1px solid rgba(79,209,232,0.2); border-radius:8px; font-size:13.5px; color:var(--text-dim); line-height:1.6;">
+        <strong style="color:var(--cyan); display:block; margin-bottom:6px;">Real-World Architecture: The Hybrid Tier Model</strong>
+        The gold standard in modern aviation is a <strong>4-tier hybrid</strong>: (1) Centralized strategic flow management (hours ahead), (2) Regional trajectory-based operations (10–30 min), (3) Decentralized multi-agent tactical deconfliction (1–10 min — the Safe Safar tier), and (4) Hard-wired autonomous reflex (TCAS/ACAS X, 15–45 sec). Safe Safar operates at Tier 3, where centralized predictions become unreliable and peer-to-peer edge autonomy is the only scalable solution.
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       SIMULATION MODULE (CAN EMBED OR EXPAND TO FULLSCREEN)
+  ============================================================ -->
+  <div class="sim-module-container" id="simulationModule">
+    <div class="sim-wrap">
+
+      <!-- Normal Header -->
+      <div class="sim-header" id="simNormalHeader">
+        <div>
+          <h2>
+            <span>Live Multi-Agent Airspace</span>
+            <span class="badge cruising" style="font-size: 11px;">Interactive Tactical Scope</span>
+          </h2>
+          <p>Each aircraft operates autonomously. Trigger scenarios below or add flights to watch real-time P2P negotiation, collision hotspot detection, and dynamic A* rerouting.</p>
+        </div>
+        <button class="btn primary fullscreen-trigger-btn" id="fsToggleBtn1">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+          ⛶ Enter Full-Screen Console
+        </button>
+      </div>
+
+      <!-- Top HUD Bar: Scenarios & Global Status -->
+      <div class="fs-hud-top">
+        <div class="hud-title">
+          <span class="live-pulse"></span>
+          <span>AIRSPACE TACTICAL RADAR</span>
+        </div>
+
+        <!-- Demonstration Scenarios -->
+        <div class="scenario-group">
+          <span style="font-size: 11px; font-family: var(--font-mono); color: var(--text-faint);">DEMO PRESETS:</span>
+          <button class="scenario-btn active-preset" id="scenarioHeadOnBtn" title="2 aircraft on opposing course. Lower priority yields.">
+            Case A: Head-On Conflict
+          </button>
+          <button class="scenario-btn cyan-btn" id="scenarioClusterBtn" title="3 aircraft converging on central fix. Cluster priority resolution.">
+            Case B: 3-Way Congestion
+          </button>
+          <button class="scenario-btn violet-btn" id="scenarioHoldBtn" title="Priority crossing convoy blocks corridor fixes; arriving low-priority flight enters autonomous holding pattern until airways clear.">
+            Case C: Holding Pattern
+          </button>
+          <button class="scenario-btn" id="scenarioTieBtn" title="Equal fuel &amp; weights resolved deterministically by unique agent ID.">
+            Case D: Deterministic Tie-Break
+          </button>
+          <button class="ctrl-btn" id="addFlightBtn" style="font-weight: 600; color: var(--cyan); border-color: var(--cyan);" title="Dynamically inject an autonomous flight at a random border waypoint.">
+            + Add Custom Flight
+          </button>
+        </div>
+
+        <!-- Fullscreen Exit / Toggle -->
+        <button class="ctrl-btn fullscreen-trigger-btn" id="fsToggleBtn2" style="font-size: 11.5px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+          <span id="fsBtnText">Full-Screen</span>
+        </button>
+      </div>
+
+      <!-- Interactive Scenario Explanation Guide -->
+      <div class="scenario-guide-box" id="scenarioGuideBox">
+        <div class="guide-top">
+          <div class="guide-title-wrap">
+            <span class="guide-badge" id="guideBadge">Case A Active</span>
+            <span class="guide-title" id="guideTitle">Pairwise Head-On Collision Course</span>
+          </div>
+          <span class="guide-hint">Select a preset to test each multi-agent decision algorithm</span>
+        </div>
+        <p class="guide-desc" id="guideDesc">
+          <strong>Setup:</strong> 2 aircraft are placed on a reciprocal heading along the same airway.<br>
+          <strong>Decision Logic:</strong> Agent #1 has lower fuel (higher fuel urgency score), so Agent #2 yields and computes an autonomous local A* avoidance detour around the conflict point.
+        </p>
+      </div>
+
+      <!-- Tactical Toolbar: Playback, Speed, Layer Toggles -->
+      <div class="tactical-toolbar">
+        <div class="btn-group">
+          <button class="ctrl-btn active" id="playPauseBtn">⏸ Pause</button>
+          <button class="ctrl-btn" data-speed="0.25" title="Slow-Motion to inspect A* decisions in detail">0.25× Slow-Mo</button>
+          <button class="ctrl-btn" data-speed="0.5">0.5×</button>
+          <button class="ctrl-btn active" data-speed="1">1×</button>
+          <button class="ctrl-btn" data-speed="2">2×</button>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Layer Toggles -->
+        <div class="btn-group">
+          <button class="ctrl-btn toggle-on" id="toggleFixNamesBtn">Fix Names</button>
+          <button class="ctrl-btn toggle-on" id="toggleSensorConesBtn">Sensor Cones</button>
+          <button class="ctrl-btn toggle-on" id="toggleP2PBeamsBtn">P2P Beams</button>
+          <button class="ctrl-btn toggle-on" id="toggleGhostPathsBtn">Ghost Detours</button>
+        </div>
+
+        <div class="divider"></div>
+        <button class="ctrl-btn warn" id="resetBtn">Reset</button>
+
+        <div style="flex:1"></div>
+
+        <!-- Quick Live Telemetry Pills -->
+        <span class="badge cruising">Active: <b id="statActive" style="color:var(--text);margin-left:3px;">0</b></span>
+        <span class="badge rerouting">Resolved: <b id="statResolved" style="color:var(--text);margin-left:3px;">0</b></span>
+        <span class="badge holding">Holding: <b id="statHolding" style="color:var(--text);margin-left:3px;">0</b></span>
+        <span class="badge" style="background:rgba(74,222,128,0.15); border:1px solid var(--green); color:var(--green)">
+          Separation: <b>100%</b>
+        </span>
+      </div>
+
+      <!-- Main Radar & Side Panels Grid -->
+      <div class="sim-grid" id="simGrid">
+
+        <!-- Radar Scope Viewport -->
+        <div class="radar-box" id="radarContainer">
+          <canvas id="radar" width="1000" height="600"></canvas>
+          <div class="radar-sweep"></div>
+
+          <!-- Live P2P Negotiation Floating Alert Banner -->
+          <div class="p2p-negotiation-banner" id="p2pBanner">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            <span id="p2pBannerText">P2P NEGOTIATION IN PROGRESS</span>
+          </div>
+
+          <!-- Radar Bottom-Left HUD Overlay -->
+          <div class="radar-hud-overlay">
+            <span>SECTOR: <b>ACC-ALPHA</b></span>
+            <span>RANGE: <b>100 NM</b></span>
+            <span>AIRSPACE: <b>CLASS B (COOPERATIVE)</b></span>
+            <span>CLICK PLANE TO INSPECT PEAS</span>
+          </div>
+        </div>
+
+        <!-- Side Intelligence Panels -->
+        <div class="side-col" id="sideCol">
+
+          <!-- Panel 1: Fleet Telemetry -->
+          <div class="panel">
+            <div class="panel-title">
+              <span>ACTIVE AGENTS</span>
+              <span id="fleetCount" style="color:var(--cyan);font-weight:600;">0 aircraft</span>
+            </div>
+            <div class="fleet-list" id="fleetList">
+              <div class="fleet-empty">No aircraft aloft. Trigger a demo preset or add flights to begin.</div>
+            </div>
+          </div>
+
+          <!-- Panel 2: P2P Reasoning Stream -->
+          <div class="panel panel-flex-1">
+            <div class="panel-title">
+              <span>P2P AGENT REASONING STREAM</span>
+              <span style="font-size:10px; color:var(--green);">● LIVE FEED</span>
+            </div>
+            <div class="log-list" id="logList">
+              <div class="log-line"><span class="t">SYSTEM</span>Airspace sensor network initialized. Ready for multi-agent coordination.</div>
+            </div>
+          </div>
+
+          <!-- Legend -->
+          <div class="panel">
+            <div class="legend">
+              <span><i style="background:var(--cyan)"></i>Cruising</span>
+              <span><i style="background:var(--rose)"></i>Conflict Projected</span>
+              <span><i style="background:var(--amber)"></i>A* Detour</span>
+              <span><i style="background:var(--violet)"></i>Holding Loiter</span>
+              <span><i style="background:var(--green)"></i>Safe Arrival</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Safe Safar v2 — Decentralized Multi-Agent Collision Avoidance &amp; Dynamic A* Rerouting · Foundations of AI Case Study
+  </footer>
+
+  <!-- ================= AGENT MIND INSPECTOR DRAWER ================= -->
+  <div class="drawer-backdrop" id="drawerBackdrop"></div>
+  <div class="drawer" id="drawer">
+    <div class="drawer-head">
+      <h3 id="drawerTitle">AGENT #— TELEMETRY</h3>
+      <button class="drawer-close" id="drawerClose">✕</button>
+    </div>
+    <div class="drawer-body">
+      <div class="field">
+        <label>Cognitive State</label>
+        <div class="readout"><span id="cfgStatusText">—</span> <span class="badge" id="cfgStatusBadge">—</span></div>
+      </div>
+      <div class="field">
+        <label>Assigned Navigational Route</label>
+        <div class="readout"><span id="cfgRouteWaypoints">Fix → Goal</span><b id="cfgDistance">—</b></div>
+      </div>
+      <div class="field">
+        <label>Fuel Remaining <b id="cfgFuelVal">—</b></label>
+        <input type="range" id="cfgFuel" min="100" max="2000" step="10">
+      </div>
+      <div class="field">
+        <label>Cruise Speed <b id="cfgSpeedVal">—</b></label>
+        <input type="range" id="cfgSpeed" min="20" max="100" step="1">
+      </div>
+      <div class="field">
+        <label>Safety Priority Weight (w<sub>p</sub>) <b id="cfgPriorityVal">—</b></label>
+        <input type="range" id="cfgPriority" min="0" max="100" step="1">
+      </div>
+      <div class="field">
+        <label>Fuel Cost Weight (w<sub>f</sub>) <b id="cfgFuelWVal">—</b></label>
+        <input type="range" id="cfgFuelW" min="0" max="100" step="1">
+      </div>
+      <div class="field">
+        <label>Delay Cost Weight (w<sub>t</sub>) <b id="cfgDelayWVal">—</b></label>
+        <input type="range" id="cfgDelayW" min="0" max="100" step="1">
+      </div>
+      <div class="field">
+        <label>Computed Priority Score &amp; Formula</label>
+        <div style="background:var(--bg-panel); border:1px solid var(--border); border-radius:6px; padding:12px; font-family:var(--font-mono); font-size:11px;">
+          <div style="color:var(--cyan); margin-bottom:6px; font-weight:600;">P = U<sub>fuel</sub> + 0.4·w<sub>p</sub></div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:4px; color:var(--text-dim);">
+            <span>Fuel Urgency U<sub>fuel</sub>:</span>
+            <b id="cfgFuelUrgencyTerm" style="color:var(--text);">—</b>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:6px; color:var(--text-dim);">
+            <span>Mission Term 0.4·w<sub>p</sub>:</span>
+            <b id="cfgWeightTerm" style="color:var(--text);">—</b>
+          </div>
+          <div style="display:flex; justify-content:space-between; border-top:1px dashed var(--border-soft); padding-top:6px; font-size:12px;">
+            <span style="color:var(--amber); font-weight:600;">Net Priority Score:</span>
+            <b id="cfgPriorityScore" style="color:var(--amber); font-size:14px;">—</b>
+          </div>
+        </div>
+      </div>
+      <div style="font-family:var(--font-mono); font-size:11px; color:var(--text-faint); line-height:1.5; background:var(--bg-panel); padding:10px; border-radius:6px; border:1px solid var(--border-soft);">
+        <b style="color:var(--cyan);">PEAS Reasoning:</b> In pairwise conflict, the agent with lower priority score yields and computes a local A* avoidance route.
+      </div>
+    </div>
+    <div class="drawer-foot">
+      <button class="btn primary" id="cfgApply">Apply Parameters</button>
+      <button class="btn" id="cfgRemove" style="color:var(--rose); border-color:rgba(251,107,107,0.3);">De-orbit / Remove Agent</button>
+    </div>
+  </div>
+
+  <!-- ================= SIMULATION JAVASCRIPT ================= -->
+  <script src="src/js/simulation.js"></script>
+</body>
+
+</html>
