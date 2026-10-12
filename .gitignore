@@ -33,7 +33,6 @@ build/
 __pycache__/
 *.py[cod]
 *.pyo
-.env
 .venv/
 venv/
 
@@ -49,3 +48,15 @@ venv/
 *.tmp
 *.bak
 src/_body_temp.html
+
+# ---- Project: Legacy monolithic HTML files ----
+# Structured codebase now lives in index.html + src/
+safe safar.html
+safe safar v2.html
+
+# ---- Project: Documentation files (except README.md) ----
+# All docs are for local reference only; README.md is NOT ignored
+docs/
+safe_safar_analysis.md
+safe_safar_faq.md
+safe_safar_ppt.md
