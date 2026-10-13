@@ -47,11 +47,6 @@ FOAI_Case_Study/
 │                                 └── UI: scenario presets (Case A–E), fleet registry,
 │                                     telemetry drawer, speed controls, layer toggles
 │
-├── docs/                       ← Local reference docs (not tracked by git)
-│   ├── safe_safar_analysis.md  ← Deep technical analysis of the system
-│   ├── safe_safar_faq.md       ← Q&A on simulation mechanics and AI concepts
-│   └── safe_safar_ppt.md       ← Slide-by-slide FOAI presentation deck & scripts
-│
 ├── .gitignore                  ← Excludes: OS artifacts, docs/, legacy HTML files
 └── README.md                   ← This file
 ```
