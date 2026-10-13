@@ -2,10 +2,61 @@
 
 **Foundations of Artificial Intelligence (FOAI) Case Study Project**
 
-[![Simulation](https://img.shields.io/badge/Simulation%20v1-Original%20Radar%20ATC-amber)](./safe%20safar.html)
-[![Simulation v2](https://img.shields.io/badge/Simulation%20v2-Airliner%20Visuals%20%26%20Multi--Agent%20Holding-cyan)](./safe%20safar%20v2.html)
+[![Live Simulation](https://img.shields.io/badge/Simulation-Launch%20index.html-cyan)](./index.html)
 [![AI Architecture](https://img.shields.io/badge/Architecture-Decentralized%20Multi--Agent-cyan)](./README.md)
 [![Pathfinding](https://img.shields.io/badge/Algorithm-A*%20Informed%20Search-green)](./README.md)
+[![Codebase](https://img.shields.io/badge/Structure-Modular%20HTML%20%2B%20CSS%20%2B%20JS-blue)](./src/)
+
+---
+
+## 📁 Codebase Structure
+
+```
+FOAI_Case_Study/
+│
+├── index.html                  ← Main entry point — clean semantic HTML shell
+│                                 Contains: page layout, nav, PEAS article, formula
+│                                 tables, simulation UI scaffold, agent inspector drawer
+│
+├── src/
+│   ├── css/
+│   │   └── simulation.css      ← All visual styles (~1,450 lines)
+│   │                             Contains: CSS variables (design tokens), topbar,
+│   │                             hero section, PEAS/formula tables, radar canvas
+│   │                             layout, flight cards, P2P log panel, fullscreen
+│   │                             tactical console, holding badge animations,
+│   │                             agent inspector drawer, responsive breakpoints
+│   │
+│   └── js/
+│       └── simulation.js       ← All simulation logic (~1,300 lines)
+│                                 Contains:
+│                                 ├── Graph Setup: aeronautical waypoint graph
+│                                 │   (KODEX, ELKEY, NAVIG, etc.), adjacency list
+│                                 ├── A* Search: Euclidean heuristic pathfinding
+│                                 │   with dynamic artificial potential field
+│                                 ├── Conflict Detection: canSenseEachOther()
+│                                 │   (forward radar cone + omnidirectional bubble),
+│                                 │   detectConflicts() with temporal projection
+│                                 │   at t = {2s, 4s, 6s, 8s}
+│                                 ├── Multi-Agent Negotiation: priorityScore(),
+│                                 │   clusterConflicts() Union-Find, resolveConflicts()
+│                                 ├── Avoidance Routing: tryReroute() with
+│                                 │   hard geometric safety gate & holding fallback
+│                                 ├── Rendering: canvas draw loop, sensor cones,
+│                                 │   P2P beams, ghost paths, hazard points
+│                                 └── UI: scenario presets (Case A–E), fleet registry,
+│                                     telemetry drawer, speed controls, layer toggles
+│
+├── docs/                       ← Local reference docs (not tracked by git)
+│   ├── safe_safar_analysis.md  ← Deep technical analysis of the system
+│   ├── safe_safar_faq.md       ← Q&A on simulation mechanics and AI concepts
+│   └── safe_safar_ppt.md       ← Slide-by-slide FOAI presentation deck & scripts
+│
+├── .gitignore                  ← Excludes: OS artifacts, docs/, legacy HTML files
+└── README.md                   ← This file
+```
+
+> **To launch:** Open `index.html` in any modern browser (Chrome, Edge, Firefox, Safari). No build step or server required.
 
 ---
 
@@ -66,12 +117,11 @@ $$\text{Cost} = (\text{CollisionRisk} \times \lambda_{\text{penalty}}) + w_d \cd
 
 ## 🔄 The 5 Core Conflict Resolution Cases
 
-- **Case A (Pairwise Conflict):** Lower-priority aircraft reroutes around the predicted conflict zone via penalized $A^*$ search (or changes flight level); higher-priority aircraft maintains course.
+- **Case A (Pairwise Conflict):** Lower-priority aircraft reroutes around the predicted conflict zone via penalized $A^*$ search; higher-priority aircraft maintains course.
 - **Case B (3+ Aircraft Intersection Congestion):** Conflicted aircraft form a cluster and sort by priority score (fuel urgency + flight weight). Highest priority holds course; subsequent aircraft sequentially reroute around all higher-priority committed paths.
 - **Case C (No Safe Alternative Route Exists):** If all alternative graph paths cross active conflict hazards, the aircraft enters a *Holding Pattern* (throttles speed to loiter safely) and retries pathfinding next cycle.
 - **Case D (Deterministic Priority Tie-Breaking):** If two conflicting aircraft possess identical priority scores, the conflict is deterministically broken by aircraft ID (lower ID yields), eliminating deadlock.
 - **Case E (Cascading Conflict Prevention):** A rerouted aircraft immediately runs forward conflict checks against all other airspace traffic before committing, looping until the airspace state stabilizes.
-
 
 ---
 
@@ -81,12 +131,13 @@ $$\text{Cost} = (\text{CollisionRisk} \times \lambda_{\text{penalty}}) + w_d \cd
    ```bash
    git clone https://github.com/Rithvikmukka/Safe-Safar---Multi-agent-air-traffic-collision-and-avoidance-system.git
    ```
-2. Double-click or open [`safe safar v2.html`](./safe%20safar%20v2.html) (Version 2 with commercial airliner silhouettes, math formulation section, and natural Case C holding pattern) or [`safe safar.html`](./safe%20safar.html) directly in any modern browser (Chrome, Edge, Firefox, Safari).
+2. Open [`index.html`](./index.html) directly in any modern browser (Chrome, Edge, Firefox, Safari). No build step or local server required.
+
 3. **Interactive Demo Scenarios:**
-   - `Case A: Head-On Conflict`: 2 reciprocal aircraft; higher-priority maintains while lower-priority computes an A* detour.
-   - `Case B: 3-Way Congestion`: 3 converging flights sort by priority score to clear a bottleneck fix.
-   - `Case C: Holding Pattern`: Priority crossing convoy blocks central corridor exits; arriving flight autonomously enters a 210kt holding orbit over its waypoint fix until cleared.
-   - `Case D: Deterministic Tie-Break`: Symmetric priorities broken deterministically by agent ID.
-   - `+ Add Custom Flight`: Spawns autonomous aircraft with randomized routes and flight levels.
-   - `0.5× / 1× / 2× / 4×`: Simulation speed multiplier.
+   - `Case A: Head-On Conflict` — 2 reciprocal aircraft; higher-priority maintains while lower-priority computes an A* detour.
+   - `Case B: 3-Way Congestion` — 3 converging flights sort by priority score to clear a bottleneck fix.
+   - `Case C: Holding Pattern` — Priority crossing convoy blocks central corridor exits; arriving flight autonomously enters a holding orbit over its waypoint fix until cleared.
+   - `Case D: Deterministic Tie-Break` — Symmetric priorities broken deterministically by agent ID.
+   - `+ Add Custom Flight` — Spawns autonomous aircraft with randomized routes and fuel levels.
+   - `0.25× / 0.5× / 1× / 2×` — Simulation speed multiplier for slow-motion A* inspection.
    - Click any aircraft on the radar to open the real-time **Telemetry & Parameters Drawer**.
