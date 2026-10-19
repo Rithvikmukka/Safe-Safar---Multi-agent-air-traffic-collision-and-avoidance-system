@@ -1,4 +1,4 @@
-﻿    (function () {
+    (function () {
       "use strict";
 
       /* ============================================================
@@ -238,27 +238,33 @@
       }
 
       function triggerCaseB() {
-        // 3-Way Sector Congestion
+        // 3-Way Sector Congestion Convergence
         aircraft = [];
         activeP2PInteractions = [];
         resolvedCount = 0;
 
-        const centerIdx = nodeIndex(Math.floor(COLS / 2), Math.floor(ROWS / 2));
+        const midRow = Math.floor(ROWS / 2);
+        const midCol = Math.floor(COLS / 2);
+        const centerIdx = nodeIndex(midCol, midRow);
         const centerNode = nodes[centerIdx];
 
-        // 3 distinct gates converging towards the center
-        const gate1 = nodeIndex(0, 1);
-        const dest1 = nodeIndex(COLS - 1, ROWS - 2);
+        // 3 distinct flights converging simultaneously on the central fix
+        // Flight 1: Eastbound along central airway (GATE-W3 -> GATE-E3)
+        const gate1 = nodeIndex(0, midRow);
+        const dest1 = nodeIndex(COLS - 1, midRow);
 
-        const gate2 = nodeIndex(COLS - 1, 1);
-        const dest2 = nodeIndex(0, ROWS - 2);
+        // Flight 2: Westbound reciprocal along central airway (GATE-E3 -> GATE-W3)
+        const gate2 = nodeIndex(COLS - 1, midRow);
+        const dest2 = nodeIndex(0, midRow);
 
-        const gate3 = nodeIndex(Math.floor(COLS / 2), 0);
-        const dest3 = nodeIndex(Math.floor(COLS / 2), ROWS - 1);
+        // Flight 3: Southbound crossing vertical spine (GATE-N5 -> GATE-S5)
+        const gate3 = nodeIndex(midCol, 0);
+        const dest3 = nodeIndex(midCol, ROWS - 1);
 
-        const ac1 = createAgent(gate1, dest1, { speed: 45, fuel: 320, fuelMax: 1600, priorityWeight: 85 });
-        const ac2 = createAgent(gate2, dest2, { speed: 45, fuel: 900, fuelMax: 1600, priorityWeight: 50 });
-        const ac3 = createAgent(gate3, dest3, { speed: 45, fuel: 1500, fuelMax: 1600, priorityWeight: 20 });
+        // Speeds calibrated so all 3 aircraft reach central fix simultaneously at t ≈ 9.5s
+        const ac1 = createAgent(gate1, dest1, { speed: 47, fuel: 320, fuelMax: 1600, priorityWeight: 85, altitude: 35000 });
+        const ac2 = createAgent(gate2, dest2, { speed: 50, fuel: 900, fuelMax: 1600, priorityWeight: 50, altitude: 34000 });
+        const ac3 = createAgent(gate3, dest3, { speed: 26.5, fuel: 1500, fuelMax: 1600, priorityWeight: 20, altitude: 33000 });
 
         logP2P(`ðŸŒ <b>CASE B (3-WAY CONGESTION):</b> Multi-agent convergence towards FIX '${centerNode.name}'.`, 'conflict');
       }

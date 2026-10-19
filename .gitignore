@@ -48,6 +48,7 @@ venv/
 *.tmp
 *.bak
 src/_body_temp.html
+scratch/
 
 # ---- Project: Legacy monolithic HTML files ----
 # Structured codebase now lives in index.html + src/
