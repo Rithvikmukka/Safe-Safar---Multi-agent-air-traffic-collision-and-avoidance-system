@@ -55,6 +55,14 @@ FOAI_Case_Study/
 
 ---
 
+## Project Scope
+
+Safe Safar v2 is a decentralized multi-agent air traffic collision avoidance simulation. It demonstrates how autonomous aircraft agents can detect potential conflicts, coordinate with nearby aircraft, and use A* search to identify alternative routes in a simulated airspace environment.
+
+The project is intended for educational purposes and demonstrates concepts related to artificial intelligence, graph search, multi-agent systems, and collision avoidance.
+
+---
+
 ## 🌟 Executive Summary & Real-World Motivation
 
 ### 1. The Scale of Global Air Traffic
